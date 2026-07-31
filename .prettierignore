@@ -1,0 +1,9 @@
+node_modules
+.next
+out
+build
+coverage
+pnpm-lock.yaml
+supabase/.temp
+prisma/migrations
+plan-clinica-fisioterapia.md

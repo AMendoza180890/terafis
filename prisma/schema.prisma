@@ -1,0 +1,810 @@
+// Esquema Terafis — Fase 0 + Fase 1.
+// RLS: supabase/migrations (fuente de verdad de seguridad).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum StaffRole {
+  admin
+  terapeuta
+  recepcionista
+}
+
+enum ThemePreference {
+  claro
+  oscuro
+  sistema
+}
+
+enum AppointmentStatus {
+  pendiente
+  confirmada
+  en_sala_espera
+  en_consulta
+  pendiente_pago
+  completado
+  cancelado
+  no_asistio
+}
+
+model Clinic {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nombre    String
+  activa    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  config         ClinicConfig?
+  staff          Staff[]
+  sessions       StaffSession[]
+  auditLog       AuditLog[]
+  rooms            Room[]
+  patients         Patient[]
+  appointments     Appointment[]
+  patientClinical  PatientClinical[]
+  consents         PatientConsent[]
+  sessionNotes     SessionNote[]
+  schedules        StaffSchedule[]
+  timeOff          StaffTimeOff[]
+  referringDoctors ReferringDoctor[]
+  services       Service[]
+  appointmentServices AppointmentService[]
+  dailyQueue     DailyQueue[]
+  payments       Payment[]
+  notifications  Notification[]
+  actionTokens   AppointmentActionToken[]
+  deliveries     NotificationDelivery[]
+  calendarJobs   CalendarSyncJob[]
+  protocols      TreatmentProtocol[]
+  treatmentPlans TreatmentPlan[]
+  products       Product[]
+  inventoryMovements InventoryMovement[]
+
+  @@map("clinics")
+}
+
+model ClinicConfig {
+  id                        String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clinicId                  String          @unique @map("clinic_id") @db.Uuid
+  direccion                 String?
+  telefono                  String?
+  rfc                       String?
+  logoPath                  String?         @map("logo_path")
+  timezone                  String          @default("America/Managua")
+  temaDefecto               ThemePreference @default(sistema) @map("tema_defecto")
+  autoLogoutRecepcionMin    Int             @default(15) @map("auto_logout_recepcion_min")
+  autoLogoutStaffMin        Int             @default(30) @map("auto_logout_staff_min")
+  mfaObligatorioAdmin       Boolean         @default(true) @map("mfa_obligatorio_admin")
+  mfaObligatorioTerapeuta   Boolean         @default(true) @map("mfa_obligatorio_terapeuta")
+  mfaObligatorioRecepcion   Boolean         @default(false) @map("mfa_obligatorio_recepcion")
+  retencionExpedientesAnios Int             @default(5) @map("retencion_expedientes_anios")
+  ultimaPruebaRestauracion  DateTime?       @map("ultima_prueba_restauracion") @db.Timestamptz(6)
+  googleCalendarId          String?         @map("google_calendar_id")
+  recordatoriosEmail24h     Boolean         @default(true) @map("recordatorios_email_24h")
+  recordatoriosSms2h        Boolean         @default(true) @map("recordatorios_sms_2h")
+  recordatoriosPush30m      Boolean         @default(true) @map("recordatorios_push_30m")
+  createdAt                 DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                 DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  clinic Clinic @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+
+  @@map("clinic_config")
+}
+
+model Staff {
+  id                     String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clinicId               String          @map("clinic_id") @db.Uuid
+  authUserId             String          @unique @map("auth_user_id") @db.Uuid
+  nombre                 String
+  email                  String
+  telefono               String?
+  rol                    StaffRole
+  especialidad           String?
+  cedulaProfesional      String?         @map("cedula_profesional")
+  comisionPorcentaje     Decimal?        @map("comision_porcentaje") @db.Decimal(5, 2)
+  temaPreferido          ThemePreference @default(sistema) @map("tema_preferido")
+  mfaHabilitado          Boolean         @default(false) @map("mfa_habilitado")
+  mfaForzarReinscripcion Boolean         @default(false) @map("mfa_forzar_reinscripcion")
+  activo                 Boolean         @default(true)
+  deletedAt              DateTime?       @map("deleted_at") @db.Timestamptz(6)
+  createdAt              DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  clinic       Clinic          @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  sessions     StaffSession[]
+  schedules    StaffSchedule[]
+  timeOff      StaffTimeOff[]
+  appointments Appointment[]   @relation("AppointmentTherapist")
+  sessionNotes SessionNote[]
+  queueItems   DailyQueue[]    @relation("QueueTherapist")
+  paymentsAsCashier Payment[]  @relation("PaymentCashier")
+  appointmentServices AppointmentService[]
+  notifications Notification[]
+  treatmentPlans TreatmentPlan[] @relation("PlanTherapist")
+  progressNotes TreatmentProgress[] @relation("ProgressTherapist")
+
+  @@index([clinicId])
+  @@index([clinicId, rol])
+  @@map("staff")
+}
+
+model StaffSession {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clinicId         String    @map("clinic_id") @db.Uuid
+  staffId          String    @map("staff_id") @db.Uuid
+  refreshTokenHash String    @map("refresh_token_hash")
+  userAgent        String?   @map("user_agent")
+  ip               String?
+  ultimoAccesoEn   DateTime  @default(now()) @map("ultimo_acceso_en") @db.Timestamptz(6)
+  revocadaEn       DateTime? @map("revocada_en") @db.Timestamptz(6)
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  clinic Clinic @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  staff  Staff  @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  @@index([clinicId])
+  @@index([staffId])
+  @@index([refreshTokenHash])
+  @@map("staff_sessions")
+}
+
+model AuditLog {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clinicId     String   @map("clinic_id") @db.Uuid
+  actorId      String?  @map("actor_id") @db.Uuid
+  rol          String?
+  accion       String
+  tabla        String?
+  registroId   String?  @map("registro_id") @db.Uuid
+  ip           String?
+  userAgent    String?  @map("user_agent")
+  diff         Json?
+  hashAnterior String   @map("hash_anterior")
+  hashActual   String   @map("hash_actual")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  clinic Clinic @relation(fields: [clinicId], references: [id], onDelete: Restrict)
+
+  @@index([clinicId, createdAt])
+  @@index([tabla, registroId])
+  @@map("audit_log")
+}
+
+model Room {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clinicId      String   @map("clinic_id") @db.Uuid
+  nombre        String
+  equipamiento  String?
+  activa        Boolean  @default(true)
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  clinic       Clinic        @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  appointments Appointment[]
+  queueItems   DailyQueue[]
+
+  @@unique([clinicId, nombre])
+  @@index([clinicId])
+  @@map("rooms")
+}
+
+model ReferringDoctor {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clinicId     String    @map("clinic_id") @db.Uuid
+  nombre       String
+  apellido     String
+  direccion    String?
+  telefono     String?
+  especialidad String?
+  activo       Boolean   @default(true)
+  deletedAt    DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  clinic   Clinic    @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  patients Patient[]
+
+  @@index([clinicId])
+  @@index([clinicId, apellido, nombre])
+  @@map("referring_doctors")
+}
+
+model Patient {
+  id                         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clinicId                   String    @map("clinic_id") @db.Uuid
+  nombre                     String
+  telefono                   String
+  email                      String?
+  fechaNacimiento            DateTime? @map("fecha_nacimiento") @db.Date
+  contactoEmergenciaNombre   String?   @map("contacto_emergencia_nombre")
+  contactoEmergenciaTelefono String?   @map("contacto_emergencia_telefono")
+  ocupacion                  String?
+  referidoDoctorId           String?   @map("referido_doctor_id") @db.Uuid
+  optInEmail                 Boolean   @default(false) @map("opt_in_email")
+  optInSms                   Boolean   @default(false) @map("opt_in_sms")
+  optInWhatsapp              Boolean   @default(false) @map("opt_in_whatsapp")
+  optInPush                  Boolean   @default(false) @map("opt_in_push")
+  optInOrigen                String?   @map("opt_in_origen")
+  optInEn                    DateTime? @map("opt_in_en") @db.Timestamptz(6)
+  deletedAt                  DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdAt                  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                  DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  clinic           Clinic           @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  referidoDoctor   ReferringDoctor? @relation(fields: [referidoDoctorId], references: [id], onDelete: SetNull)
+  clinical         PatientClinical[]
+  consents         PatientConsent[]
+  appointments     Appointment[]
+  sessionNotes     SessionNote[]
+  queueItems       DailyQueue[]
+  payments         Payment[]
+  deliveries       NotificationDelivery[]
+  treatmentPlans   TreatmentPlan[]
+
+  @@index([clinicId])
+  @@index([clinicId, nombre])
+  @@index([clinicId, telefono])
+  @@index([referidoDoctorId])
+  @@map("patients")
+}
+
+model PatientClinical {
+  id                          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clinicId                    String    @map("clinic_id") @db.Uuid
+  patientId                   String    @map("patient_id") @db.Uuid
+  titulo                      String    @default("Expediente clínico")
+  estado                      String    @default("activo")
+  fechaApertura               DateTime  @default(dbgenerated("CURRENT_DATE")) @map("fecha_apertura") @db.Date
+  fechaCierre                 DateTime? @map("fecha_cierre") @db.Date
+  historialMedico             String?   @map("historial_medico")
+  alergias                    String?
+  medicamentos                String?
+  diagnosticosPrevios         String?   @map("diagnosticos_previos")
+  anamnesis                   String?
+  exploracionFisica           String?   @map("exploracion_fisica")
+  diagnosticoFisioterapeutico String?   @map("diagnostico_fisioterapeutico")
+  objetivoTratamiento         String?   @map("objetivo_tratamiento")
+  createdAt                   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                   DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  clinic       Clinic        @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  patient      Patient       @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  sessionNotes SessionNote[]
+
+  @@index([clinicId])
+  @@index([patientId, estado])
+  @@map("patient_clinical")
+}
+
+model PatientConsent {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clinicId         String   @map("clinic_id") @db.Uuid
+  patientId        String   @map("patient_id") @db.Uuid
+  tipo             String
+  versionDocumento String   @map("version_documento")
+  textoHash        String   @map("texto_hash")
+  fechaAceptacion  DateTime @default(now()) @map("fecha_aceptacion") @db.Timestamptz(6)
+  ip               String?
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  clinic  Clinic  @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@index([patientId])
+  @@map("patient_consents")
+}
+
+model SessionNote {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clinicId        String   @map("clinic_id") @db.Uuid
+  patientId       String   @map("patient_id") @db.Uuid
+  clinicalId      String?  @map("clinical_id") @db.Uuid
+  appointmentId   String?  @map("appointment_id") @db.Uuid
+  terapeutaId     String   @map("terapeuta_id") @db.Uuid
+  notasEvolucion  String?  @map("notas_evolucion")
+  dolorEva        Int?     @map("dolor_eva") @db.SmallInt
+  rangoMovimiento String?  @map("rango_movimiento")
+  tratamiento     String?
+  observaciones   String?
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  clinic      Clinic           @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  patient     Patient          @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  clinical    PatientClinical? @relation(fields: [clinicalId], references: [id], onDelete: SetNull)
+  terapeuta   Staff            @relation(fields: [terapeutaId], references: [id])
+  appointment Appointment?     @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+
+  @@index([patientId])
+  @@index([clinicId])
+  @@index([clinicalId])
+  @@map("session_notes")
+}
+
+model StaffSchedule {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clinicId   String   @map("clinic_id") @db.Uuid
+  staffId    String   @map("staff_id") @db.Uuid
+  diaSemana  Int      @map("dia_semana") @db.SmallInt
+  horaInicio DateTime @map("hora_inicio") @db.Time(6)
+  horaFin    DateTime @map("hora_fin") @db.Time(6)
+  activo     Boolean  @default(true)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  clinic Clinic @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  staff  Staff  @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  @@unique([staffId, diaSemana, horaInicio])
+  @@index([clinicId])
+  @@map("staff_schedules")
+}
+
+model StaffTimeOff {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clinicId  String   @map("clinic_id") @db.Uuid
+  staffId   String   @map("staff_id") @db.Uuid
+  inicio    DateTime @db.Timestamptz(6)
+  fin       DateTime @db.Timestamptz(6)
+  motivo    String?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  clinic Clinic @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  staff  Staff  @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  @@index([staffId, inicio, fin])
+  @@map("staff_time_off")
+}
+
+model Appointment {
+  id           String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clinicId     String            @map("clinic_id") @db.Uuid
+  patientId    String            @map("patient_id") @db.Uuid
+  terapeutaId  String            @map("terapeuta_id") @db.Uuid
+  salaId       String?           @map("sala_id") @db.Uuid
+  inicio       DateTime          @db.Timestamptz(6)
+  fin          DateTime          @db.Timestamptz(6)
+  estado       AppointmentStatus @default(pendiente)
+  tipoServicio String?           @map("tipo_servicio")
+  notasAdmin   String?           @map("notas_admin")
+  googleEventId String?          @map("google_event_id")
+  createdAt    DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  clinic      Clinic        @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  patient     Patient       @relation(fields: [patientId], references: [id])
+  terapeuta   Staff         @relation("AppointmentTherapist", fields: [terapeutaId], references: [id])
+  sala        Room?         @relation(fields: [salaId], references: [id])
+  sessionNotes SessionNote[]
+  services    AppointmentService[]
+  queueItem   DailyQueue?
+  payments    Payment[]
+  actionTokens AppointmentActionToken[]
+  deliveries  NotificationDelivery[]
+  calendarJobs CalendarSyncJob[]
+  progressNotes TreatmentProgress[]
+
+  @@index([clinicId, inicio])
+  @@index([terapeutaId, inicio])
+  @@index([patientId, inicio])
+  @@map("appointments")
+}
+
+enum ServiceTipo {
+  consulta_evaluacion
+  consulta_seguimiento
+  sesion_terapia
+  paquete_sesiones
+  producto
+  estudio_especial
+  otro
+}
+
+enum PaymentMethod {
+  cash
+  transferencia
+}
+
+enum PaymentStatus {
+  pendiente
+  pagado
+  reembolsado
+  cancelado
+}
+
+enum QueueStatus {
+  pendiente
+  en_sala_espera
+  en_consulta
+  pendiente_pago
+  completado
+  no_asistio
+  cancelado
+}
+
+model Service {
+  id                   String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clinicId             String      @map("clinic_id") @db.Uuid
+  tipo                 ServiceTipo
+  titulo               String      @db.VarChar(255)
+  descripcion          String?
+  costo                Decimal     @db.Decimal(10, 2)
+  duracionMinutos      Int?        @map("duracion_minutos")
+  requiereAutorizacion Boolean     @default(false) @map("requiere_autorizacion")
+  activo               Boolean     @default(true)
+  createdAt            DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  clinic               Clinic               @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  appointmentServices  AppointmentService[]
+  products             Product[]
+
+  @@index([clinicId])
+  @@map("services")
+}
+
+model AppointmentService {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clinicId      String   @map("clinic_id") @db.Uuid
+  appointmentId String   @map("appointment_id") @db.Uuid
+  serviceId     String   @map("service_id") @db.Uuid
+  costoAplicado Decimal  @map("costo_aplicado") @db.Decimal(10, 2)
+  cantidad      Int      @default(1)
+  terapeutaId   String?  @map("terapeuta_id") @db.Uuid
+  notas         String?
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  clinic      Clinic      @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  service     Service     @relation(fields: [serviceId], references: [id])
+  terapeuta   Staff?      @relation(fields: [terapeutaId], references: [id])
+
+  @@index([appointmentId])
+  @@map("appointment_services")
+}
+
+model DailyQueue {
+  id                 String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clinicId           String      @map("clinic_id") @db.Uuid
+  appointmentId      String      @unique @map("appointment_id") @db.Uuid
+  patientId          String      @map("patient_id") @db.Uuid
+  terapeutaId        String      @map("terapeuta_id") @db.Uuid
+  salaId             String?     @map("sala_id") @db.Uuid
+  fecha              DateTime    @db.Date
+  horaCita           DateTime    @map("hora_cita") @db.Time(6)
+  horaLlegada        DateTime?   @map("hora_llegada") @db.Timestamptz(6)
+  horaInicioAtencion DateTime?   @map("hora_inicio_atencion") @db.Timestamptz(6)
+  horaFinAtencion    DateTime?   @map("hora_fin_atencion") @db.Timestamptz(6)
+  estado             QueueStatus @default(pendiente)
+  prioridad          Int         @default(0)
+  posicionCola       Int         @default(0) @map("posicion_cola")
+  notasRecepcion     String?     @map("notas_recepcion")
+  version            Int         @default(0)
+  createdAt          DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  clinic      Clinic      @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  patient     Patient     @relation(fields: [patientId], references: [id])
+  terapeuta   Staff       @relation("QueueTherapist", fields: [terapeutaId], references: [id])
+  sala        Room?       @relation(fields: [salaId], references: [id])
+
+  @@index([clinicId, fecha, posicionCola])
+  @@index([terapeutaId, fecha])
+  @@map("daily_queue")
+}
+
+model Payment {
+  id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clinicId        String        @map("clinic_id") @db.Uuid
+  appointmentId   String        @map("appointment_id") @db.Uuid
+  pacienteId      String        @map("paciente_id") @db.Uuid
+  idempotencyKey  String        @unique @map("idempotency_key") @db.VarChar(64)
+  metodoPago      PaymentMethod @map("metodo_pago")
+  monto           Decimal       @db.Decimal(10, 2)
+  montoRecibido   Decimal?      @map("monto_recibido") @db.Decimal(10, 2)
+  cambio          Decimal?      @db.Decimal(10, 2)
+  referencia      String?       @db.VarChar(255)
+  estado          PaymentStatus @default(pendiente)
+  pagadoEnCaja    Boolean       @default(false) @map("pagado_en_caja")
+  cajeroId        String?       @map("cajero_id") @db.Uuid
+  fechaPago       DateTime?     @map("fecha_pago") @db.Timestamptz(6)
+  comprobantePath String?       @map("comprobante_path") @db.VarChar(500)
+  paymentRefId    String?       @map("payment_ref_id") @db.Uuid
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  clinic      Clinic      @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  appointment Appointment @relation(fields: [appointmentId], references: [id])
+  paciente    Patient     @relation(fields: [pacienteId], references: [id])
+  cajero      Staff?      @relation("PaymentCashier", fields: [cajeroId], references: [id])
+  paymentRef  Payment?    @relation("PaymentRefund", fields: [paymentRefId], references: [id])
+  refunds     Payment[]   @relation("PaymentRefund")
+
+  @@index([clinicId, createdAt])
+  @@index([appointmentId])
+  @@map("payments")
+}
+
+model Notification {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clinicId     String    @map("clinic_id") @db.Uuid
+  roleDestino  String?   @map("role_destino")
+  staffId      String?   @map("staff_id") @db.Uuid
+  tipo         String
+  titulo       String
+  cuerpo       String
+  payload      Json?
+  leida        Boolean   @default(false)
+  leidaEn      DateTime? @map("leida_en") @db.Timestamptz(6)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  clinic Clinic @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  staff  Staff? @relation(fields: [staffId], references: [id])
+
+  @@index([clinicId, createdAt])
+  @@map("notifications")
+}
+
+enum AppointmentTokenAction {
+  confirmar
+  cancelar
+  reagendar
+}
+
+enum DeliveryChannel {
+  email
+  sms
+  whatsapp
+  push
+  in_app
+}
+
+enum DeliveryStatus {
+  pendiente
+  enviando
+  enviado
+  fallido
+  cancelado
+}
+
+enum CalendarSyncStatus {
+  pendiente
+  enviando
+  sincronizado
+  fallido
+  cancelado
+}
+
+model AppointmentActionToken {
+  id            String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clinicId      String                 @map("clinic_id") @db.Uuid
+  appointmentId String                 @map("appointment_id") @db.Uuid
+  accion        AppointmentTokenAction
+  tokenHash     String                 @unique @map("token_hash")
+  expiraEn      DateTime               @map("expira_en") @db.Timestamptz(6)
+  usadoEn       DateTime?              @map("usado_en") @db.Timestamptz(6)
+  createdAt     DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  clinic      Clinic      @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+
+  @@unique([appointmentId, accion])
+  @@index([appointmentId])
+  @@map("appointment_action_tokens")
+}
+
+model NotificationDelivery {
+  id               String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clinicId         String          @map("clinic_id") @db.Uuid
+  appointmentId    String?         @map("appointment_id") @db.Uuid
+  patientId        String?         @map("patient_id") @db.Uuid
+  canal            DeliveryChannel
+  plantilla        String
+  destino          String
+  payload          Json            @default("{}")
+  estado           DeliveryStatus  @default(pendiente)
+  intentos         Int             @default(0)
+  maxIntentos      Int             @default(5) @map("max_intentos")
+  proximoIntentoEn DateTime        @default(now()) @map("proximo_intento_en") @db.Timestamptz(6)
+  ultimoError      String?         @map("ultimo_error")
+  enviadoEn        DateTime?       @map("enviado_en") @db.Timestamptz(6)
+  createdAt        DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  clinic      Clinic       @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  appointment Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+  patient     Patient?     @relation(fields: [patientId], references: [id], onDelete: SetNull)
+
+  @@index([clinicId, createdAt])
+  @@map("notification_deliveries")
+}
+
+model CalendarSyncJob {
+  id               String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clinicId         String             @map("clinic_id") @db.Uuid
+  appointmentId    String             @map("appointment_id") @db.Uuid
+  operacion        String
+  googleEventId    String?            @map("google_event_id")
+  payload          Json               @default("{}")
+  estado           CalendarSyncStatus @default(pendiente)
+  intentos         Int                @default(0)
+  maxIntentos      Int                @default(8) @map("max_intentos")
+  proximoIntentoEn DateTime           @default(now()) @map("proximo_intento_en") @db.Timestamptz(6)
+  ultimoError      String?            @map("ultimo_error")
+  createdAt        DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  clinic      Clinic      @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+
+  @@map("calendar_sync_jobs")
+}
+
+model TreatmentProtocol {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clinicId    String   @map("clinic_id") @db.Uuid
+  codigo      String
+  titulo      String
+  descripcion String?
+  activo      Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  clinic    Clinic             @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  exercises ProtocolExercise[]
+  plans     TreatmentPlan[]
+
+  @@unique([clinicId, codigo])
+  @@map("treatment_protocols")
+}
+
+model ProtocolExercise {
+  id          String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clinicId    String  @map("clinic_id") @db.Uuid
+  protocolId  String  @map("protocol_id") @db.Uuid
+  nombre      String
+  descripcion String?
+  series      Int?
+  repeticiones Int?
+  mediaUrl    String? @map("media_url")
+  orden       Int     @default(0)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  protocol TreatmentProtocol @relation(fields: [protocolId], references: [id], onDelete: Cascade)
+
+  @@map("protocol_exercises")
+}
+
+model TreatmentPlan {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clinicId      String   @map("clinic_id") @db.Uuid
+  patientId     String   @map("patient_id") @db.Uuid
+  terapeutaId   String   @map("terapeuta_id") @db.Uuid
+  protocolId    String?  @map("protocol_id") @db.Uuid
+  activo        Boolean  @default(true)
+  versionActual Int      @default(1) @map("version_actual")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  clinic    Clinic                  @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  patient   Patient                 @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  terapeuta Staff                   @relation("PlanTherapist", fields: [terapeutaId], references: [id])
+  protocol  TreatmentProtocol?      @relation(fields: [protocolId], references: [id])
+  versions  TreatmentPlanVersion[]
+  progress  TreatmentProgress[]
+
+  @@index([patientId])
+  @@map("treatment_plans")
+}
+
+model TreatmentPlanVersion {
+  id                     String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clinicId               String   @map("clinic_id") @db.Uuid
+  planId                 String   @map("plan_id") @db.Uuid
+  version                Int
+  diagnostico            String?
+  objetivo               String?
+  frecuencia             String
+  duracionEstimadaSemanas Int?    @map("duracion_estimada_semanas")
+  creadoPor              String?  @map("creado_por") @db.Uuid
+  createdAt              DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  plan      TreatmentPlan       @relation(fields: [planId], references: [id], onDelete: Cascade)
+  exercises TreatmentExercise[]
+
+  @@unique([planId, version])
+  @@map("treatment_plan_versions")
+}
+
+model TreatmentExercise {
+  id            String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clinicId      String  @map("clinic_id") @db.Uuid
+  planVersionId String  @map("plan_version_id") @db.Uuid
+  nombre        String
+  descripcion   String?
+  series        Int?
+  repeticiones  Int?
+  mediaUrl      String? @map("media_url")
+  orden         Int     @default(0)
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  planVersion TreatmentPlanVersion @relation(fields: [planVersionId], references: [id], onDelete: Cascade)
+
+  @@map("treatment_exercises")
+}
+
+model TreatmentProgress {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clinicId      String   @map("clinic_id") @db.Uuid
+  planId        String   @map("plan_id") @db.Uuid
+  appointmentId String?  @map("appointment_id") @db.Uuid
+  terapeutaId   String   @map("terapeuta_id") @db.Uuid
+  notas         String?
+  dolorEva      Int?     @map("dolor_eva") @db.SmallInt
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  plan        TreatmentPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  appointment Appointment?  @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+  terapeuta   Staff         @relation("ProgressTherapist", fields: [terapeutaId], references: [id])
+
+  @@map("treatment_progress")
+}
+
+enum InventoryMovementTipo {
+  entrada
+  salida
+  ajuste
+  venta
+  consumo_sesion
+}
+
+model Product {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clinicId     String   @map("clinic_id") @db.Uuid
+  serviceId    String?  @map("service_id") @db.Uuid
+  sku          String?
+  nombre       String
+  descripcion  String?
+  unidad       String   @default("unidad")
+  precioVenta  Decimal  @map("precio_venta") @db.Decimal(10, 2)
+  stockMinimo  Int      @default(0) @map("stock_minimo")
+  activo       Boolean  @default(true)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  clinic    Clinic              @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  service   Service?            @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  movements InventoryMovement[]
+
+  @@unique([clinicId, sku])
+  @@index([clinicId])
+  @@map("products")
+}
+
+model InventoryMovement {
+  id                   String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clinicId             String                @map("clinic_id") @db.Uuid
+  productId            String                @map("product_id") @db.Uuid
+  tipo                 InventoryMovementTipo
+  cantidadDelta        Int                   @map("cantidad_delta")
+  motivo               String?
+  appointmentId        String?               @map("appointment_id") @db.Uuid
+  appointmentServiceId String?               @map("appointment_service_id") @db.Uuid
+  paymentId            String?               @map("payment_id") @db.Uuid
+  createdBy            String?               @map("created_by") @db.Uuid
+  createdAt            DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  clinic  Clinic  @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([productId, createdAt])
+  @@index([clinicId, createdAt])
+  @@map("inventory_movements")
+}
