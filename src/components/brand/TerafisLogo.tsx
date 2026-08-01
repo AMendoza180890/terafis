@@ -25,8 +25,8 @@ export function TerafisLogo({
       width={width}
       height={height}
       priority={priority}
-      className={`h-auto w-auto ${className}`}
-      style={{ height, width: "auto" }}
+      className={className}
+      style={{ width: "auto", height: `${height}px` }}
     />
   );
 

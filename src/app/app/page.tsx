@@ -1,6 +1,10 @@
 import { ActionButton } from "@/components/ui/ActionButton";
 import { getCurrentStaff } from "@/lib/auth/current-staff";
-import { clinicTodayIso, DEFAULT_TZ } from "@/lib/datetime/clinic-tz";
+import {
+  clinicDayBoundsUtc,
+  clinicTodayIso,
+  DEFAULT_TZ,
+} from "@/lib/datetime/clinic-tz";
 import { formatMoney } from "@/lib/money/totals";
 import { getEffectiveMenuAccessForStaff } from "@/lib/permissions/resolve";
 import type { MenuKey } from "@/lib/permissions/menu-catalog";
@@ -33,9 +37,7 @@ export default async function AppHomePage() {
       const tz =
         (cfg as { timezone?: string } | null)?.timezone ?? DEFAULT_TZ;
       const fechaClinica = clinicTodayIso(tz);
-      const start = new Date(`${fechaClinica}T00:00:00`);
-      const end = new Date(start);
-      end.setDate(end.getDate() + 1);
+      const { startIso, endIso } = clinicDayBoundsUtc(fechaClinica, tz);
 
       const canSeeCaja = allowed.has("caja");
       const canSeeInventario = allowed.has("inventario");
@@ -49,20 +51,24 @@ export default async function AppHomePage() {
         supabase
           .from("appointments")
           .select("id", { count: "exact", head: true })
-          .gte("inicio", start.toISOString())
-          .lt("inicio", end.toISOString())
+          .eq("clinic_id", staff.clinicId)
+          .gte("inicio", startIso)
+          .lt("inicio", endIso)
           .not("estado", "in", "(cancelado,no_asistio)"),
         supabase
           .from("daily_queue")
           .select("id", { count: "exact", head: true })
+          .eq("clinic_id", staff.clinicId)
           .eq("estado", "en_sala_espera")
           .eq("fecha", fechaClinica),
         canSeeCaja
           ? supabase
               .from("payments")
               .select("monto, metodo_pago, estado, cajero_id, fecha_pago")
+              .eq("clinic_id", staff.clinicId)
               .eq("estado", "pagado")
-              .gte("fecha_pago", start.toISOString())
+              .gte("fecha_pago", startIso)
+              .lt("fecha_pago", endIso)
           : Promise.resolve({
               data: [] as Array<{
                 monto: string;
@@ -76,6 +82,7 @@ export default async function AppHomePage() {
           ? supabase
               .from("product_stock")
               .select("product_id")
+              .eq("clinic_id", staff.clinicId)
               .eq("bajo_minimo", true)
               .eq("activo", true)
           : Promise.resolve({ data: [] as Array<{ product_id: string }> }),
