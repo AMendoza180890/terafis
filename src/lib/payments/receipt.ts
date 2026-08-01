@@ -63,6 +63,128 @@ function decryptCipher(cipher: string | null, key: string | undefined): string {
   }
 }
 
+async function loadPlanById(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  planId: string,
+  versionActual?: number | null,
+): Promise<PaymentReceiptPlan | null> {
+  let versionNum = versionActual ?? null;
+  if (versionNum == null) {
+    const { data: plan } = await supabase
+      .from("treatment_plans")
+      .select("version_actual")
+      .eq("id", planId)
+      .maybeSingle();
+    versionNum = (plan as { version_actual?: number } | null)?.version_actual ?? 1;
+  }
+
+  const { data: version } = await supabase
+    .from("treatment_plan_versions")
+    .select(
+      "id, version, diagnostico, objetivo, frecuencia, duracion_estimada_semanas",
+    )
+    .eq("plan_id", planId)
+    .eq("version", versionNum)
+    .maybeSingle();
+
+  if (!version) {
+    // Fallback: última versión disponible del plan.
+    const { data: latestVersion } = await supabase
+      .from("treatment_plan_versions")
+      .select(
+        "id, version, diagnostico, objetivo, frecuencia, duracion_estimada_semanas",
+      )
+      .eq("plan_id", planId)
+      .order("version", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (!latestVersion) return null;
+    return hydratePlanVersion(supabase, latestVersion);
+  }
+
+  return hydratePlanVersion(supabase, version);
+}
+
+async function hydratePlanVersion(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  version: {
+    id: string;
+    version: number;
+    diagnostico: string | null;
+    objetivo: string | null;
+    frecuencia: string;
+    duracion_estimada_semanas: number | null;
+  },
+): Promise<PaymentReceiptPlan> {
+  const { data: exercises } = await supabase
+    .from("treatment_exercises")
+    .select("nombre, descripcion, series, repeticiones, orden")
+    .eq("plan_version_id", version.id)
+    .order("orden", { ascending: true });
+
+  const key = process.env.FIELD_ENCRYPTION_KEY;
+  const exerciseRows = (
+    (exercises ?? []) as Array<{
+      nombre: string;
+      descripcion: string | null;
+      series: number | null;
+      repeticiones: number | null;
+    }>
+  ).map((e) => ({
+    nombre: e.nombre,
+    descripcion: decryptCipher(e.descripcion, key),
+    series: e.series,
+    repeticiones: e.repeticiones,
+  }));
+
+  return {
+    diagnostico: decryptCipher(version.diagnostico, key),
+    objetivo: decryptCipher(version.objetivo, key),
+    frecuencia: version.frecuencia,
+    duracionEstimadaSemanas: version.duracion_estimada_semanas,
+    ejerciciosDetalle: exercisesToDetalle(exerciseRows),
+    version: version.version,
+  };
+}
+
+/** Plan enlazado a la cita; si no hay enlace, plan activo del paciente. */
+async function resolveTreatmentPlanForAppointment(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  appointmentId: string,
+  patientId: string,
+  clinicId: string,
+): Promise<PaymentReceiptPlan | null> {
+  const { data: progress } = await supabase
+    .from("treatment_progress")
+    .select("plan_id")
+    .eq("appointment_id", appointmentId)
+    .eq("clinic_id", clinicId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const linkedPlanId = (progress as { plan_id?: string } | null)?.plan_id;
+  if (linkedPlanId) {
+    const plan = await loadPlanById(supabase, linkedPlanId);
+    if (plan) return plan;
+  }
+
+  // Fallback: plan activo del paciente (consultas anteriores sin enlace).
+  const { data: activePlan } = await supabase
+    .from("treatment_plans")
+    .select("id, version_actual")
+    .eq("patient_id", patientId)
+    .eq("clinic_id", clinicId)
+    .eq("activo", true)
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (!activePlan) return null;
+  const row = activePlan as { id: string; version_actual: number };
+  return loadPlanById(supabase, row.id, row.version_actual);
+}
+
 export async function getPaymentReceiptAction(
   paymentId: string,
 ): Promise<{ ok: true; receipt: PaymentReceipt } | { ok: false; error: string }> {
@@ -106,8 +228,8 @@ export async function getPaymentReceiptAction(
     configRes,
     linesRes,
     noteRes,
-    planRes,
     cajeroRes,
+    treatmentPlan,
   ] = await Promise.all([
     supabase
       .from("patients")
@@ -138,18 +260,15 @@ export async function getPaymentReceiptAction(
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle(),
-    supabase
-      .from("treatment_plans")
-      .select("id, version_actual")
-      .eq("patient_id", p.paciente_id)
-      .eq("clinic_id", p.clinic_id)
-      .eq("activo", true)
-      .order("updated_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
     p.cajero_id
       ? supabase.from("staff").select("nombre").eq("id", p.cajero_id).maybeSingle()
       : Promise.resolve({ data: null }),
+    resolveTreatmentPlanForAppointment(
+      supabase,
+      p.appointment_id,
+      p.paciente_id,
+      p.clinic_id,
+    ),
   ]);
 
   const serviceIds = [
@@ -201,61 +320,6 @@ export async function getPaymentReceiptAction(
       dolorEva: n.dolor_eva,
       createdAt: n.created_at,
     };
-  }
-
-  let treatmentPlan: PaymentReceiptPlan | null = null;
-  const planRow = planRes.data as
-    | { id: string; version_actual: number }
-    | null;
-  if (planRow) {
-    const { data: version } = await supabase
-      .from("treatment_plan_versions")
-      .select(
-        "id, version, diagnostico, objetivo, frecuencia, duracion_estimada_semanas",
-      )
-      .eq("plan_id", planRow.id)
-      .eq("version", planRow.version_actual)
-      .maybeSingle();
-
-    if (version) {
-      const v = version as {
-        id: string;
-        version: number;
-        diagnostico: string | null;
-        objetivo: string | null;
-        frecuencia: string;
-        duracion_estimada_semanas: number | null;
-      };
-      const { data: exercises } = await supabase
-        .from("treatment_exercises")
-        .select("nombre, descripcion, series, repeticiones, orden")
-        .eq("plan_version_id", v.id)
-        .order("orden", { ascending: true });
-
-      const key = process.env.FIELD_ENCRYPTION_KEY;
-      const exerciseRows = (
-        (exercises ?? []) as Array<{
-          nombre: string;
-          descripcion: string | null;
-          series: number | null;
-          repeticiones: number | null;
-        }>
-      ).map((e) => ({
-        nombre: e.nombre,
-        descripcion: decryptCipher(e.descripcion, key),
-        series: e.series,
-        repeticiones: e.repeticiones,
-      }));
-
-      treatmentPlan = {
-        diagnostico: decryptCipher(v.diagnostico, key),
-        objetivo: decryptCipher(v.objetivo, key),
-        frecuencia: v.frecuencia,
-        duracionEstimadaSemanas: v.duracion_estimada_semanas,
-        ejerciciosDetalle: exercisesToDetalle(exerciseRows),
-        version: v.version,
-      };
-    }
   }
 
   const config = configRes.data as {

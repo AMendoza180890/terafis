@@ -87,6 +87,7 @@ export async function createSessionNoteAction(raw: unknown): Promise<ActionResul
   const planResult = sessionNoteHasTreatmentPlan(input)
     ? await ensureTreatmentPlanFromSessionAction({
         patientId: input.patientId,
+        appointmentId: input.appointmentId,
         diagnostico: input.diagnostico,
         objetivo: input.objetivo,
         frecuencia: input.frecuencia,

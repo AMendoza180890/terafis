@@ -75,6 +75,13 @@ export const CreateTreatmentPlanSchema = TreatmentPlanFieldsSchema.extend({
     .optional()
     .or(z.literal(""))
     .transform((v) => (v === "" ? undefined : v)),
+  /** Cita de la atención: enlaza el plan para factura/comprobante. */
+  appointmentId: z
+    .string()
+    .uuid()
+    .optional()
+    .or(z.literal(""))
+    .transform((v) => (v === "" ? undefined : v)),
 });
 
 export type CreateTreatmentPlanInput = z.infer<typeof CreateTreatmentPlanSchema>;

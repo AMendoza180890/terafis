@@ -169,7 +169,8 @@ export function PaymentReceiptView({ receipt }: { receipt: PaymentReceipt }) {
         {receipt.treatmentPlan ? (
           <section className="border-brand/10 space-y-2 border-t pt-4">
             <h2 className="text-base font-semibold">
-              Plan de tratamiento (v{receipt.treatmentPlan.version})
+              Plan de tratamiento de la atención (v
+              {receipt.treatmentPlan.version})
             </h2>
             <NoteBlock
               label="Diagnóstico"

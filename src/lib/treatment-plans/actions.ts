@@ -275,6 +275,29 @@ export async function getLatestTreatmentPlanForPatientAction(
   };
 }
 
+async function linkPlanToAppointment(params: {
+  clinicId: string;
+  planId: string;
+  appointmentId: string;
+  terapeutaId: string;
+}): Promise<void> {
+  const supabase = await createClient();
+  // Un enlace por cita: reemplaza si ya existía.
+  await supabase
+    .from("treatment_progress")
+    .delete()
+    .eq("appointment_id", params.appointmentId)
+    .eq("clinic_id", params.clinicId);
+
+  await supabase.from("treatment_progress").insert({
+    clinic_id: params.clinicId,
+    plan_id: params.planId,
+    appointment_id: params.appointmentId,
+    terapeuta_id: params.terapeutaId,
+    notas: null,
+  });
+}
+
 /** Crea plan v1 o nueva versión si el contenido cambió respecto al plan activo. */
 export async function ensureTreatmentPlanFromSessionAction(
   raw: unknown,
@@ -287,40 +310,58 @@ export async function ensureTreatmentPlanFromSessionAction(
     };
   }
 
+  const staff = await requireCurrentStaff();
   const latest = await getLatestTreatmentPlanForPatientAction(
     parsed.data.patientId,
   );
   if (!latest.ok) return latest;
 
+  let result: ActionResult;
+
   if (!latest.plan) {
-    return createTreatmentPlanAction(parsed.data);
+    result = await createTreatmentPlanAction(parsed.data);
+  } else {
+    const same =
+      latest.plan.diagnostico.trim() === parsed.data.diagnostico.trim() &&
+      latest.plan.objetivo.trim() === parsed.data.objetivo.trim() &&
+      latest.plan.frecuencia.trim() === parsed.data.frecuencia.trim() &&
+      (latest.plan.duracionEstimadaSemanas ?? null) ===
+        (parsed.data.duracionEstimadaSemanas ?? null) &&
+      latest.plan.ejerciciosDetalle.trim() ===
+        parsed.data.ejerciciosDetalle.trim();
+
+    if (same) {
+      result = {
+        ok: true,
+        id: latest.plan.planId,
+        version: latest.plan.version,
+      };
+    } else {
+      result = await createPlanVersionAction({
+        planId: latest.plan.planId,
+        diagnostico: parsed.data.diagnostico,
+        objetivo: parsed.data.objetivo,
+        frecuencia: parsed.data.frecuencia,
+        duracionEstimadaSemanas: parsed.data.duracionEstimadaSemanas,
+        ejerciciosDetalle: parsed.data.ejerciciosDetalle,
+      });
+    }
   }
 
-  const same =
-    latest.plan.diagnostico.trim() === parsed.data.diagnostico.trim() &&
-    latest.plan.objetivo.trim() === parsed.data.objetivo.trim() &&
-    latest.plan.frecuencia.trim() === parsed.data.frecuencia.trim() &&
-    (latest.plan.duracionEstimadaSemanas ?? null) ===
-      (parsed.data.duracionEstimadaSemanas ?? null) &&
-    latest.plan.ejerciciosDetalle.trim() ===
-      parsed.data.ejerciciosDetalle.trim();
-
-  if (same) {
-    return {
-      ok: true,
-      id: latest.plan.planId,
-      version: latest.plan.version,
-    };
+  if (
+    result.ok &&
+    parsed.data.appointmentId &&
+    staff.rol !== "recepcionista"
+  ) {
+    await linkPlanToAppointment({
+      clinicId: staff.clinicId,
+      planId: result.id,
+      appointmentId: parsed.data.appointmentId,
+      terapeutaId: staff.id,
+    });
   }
 
-  return createPlanVersionAction({
-    planId: latest.plan.planId,
-    diagnostico: parsed.data.diagnostico,
-    objetivo: parsed.data.objetivo,
-    frecuencia: parsed.data.frecuencia,
-    duracionEstimadaSemanas: parsed.data.duracionEstimadaSemanas,
-    ejerciciosDetalle: parsed.data.ejerciciosDetalle,
-  });
+  return result;
 }
 
 export async function seedProtocolsAction(): Promise<ActionResult> {
