@@ -238,9 +238,7 @@ export default async function ColaPage({ searchParams }: Props) {
         services={services}
         canManage={canManage}
         canCharge={canManage}
-        canAttend={
-          staff?.rol === "admin" || staff?.rol === "terapeuta"
-        }
+        canAttend={staff?.rol === "terapeuta"}
         canFinalize={
           staff?.rol === "admin" || staff?.rol === "terapeuta"
         }

@@ -61,6 +61,7 @@ export default async function PacienteDetailPage({
 
   const canFinalizeConsultation =
     staff.rol === "terapeuta" || staff.rol === "admin";
+  const canStartConsultation = staff.rol === "terapeuta";
 
   const { data: config } = await supabase
     .from("clinic_config")
@@ -284,6 +285,7 @@ export default async function PacienteDetailPage({
             services={services}
             activeConsultation={activeConsultation}
             canFinalizeConsultation={canFinalizeConsultation}
+            canStartConsultation={canStartConsultation}
             canWriteClinical={canWriteClinical}
             canManageEpisodes={canManageEpisodes}
             canWriteSessionNotes={canWriteSessionNotes}

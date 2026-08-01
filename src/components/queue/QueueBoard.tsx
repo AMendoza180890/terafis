@@ -57,7 +57,7 @@ type Props = {
   canSync: boolean;
   /** Recepción/admin: check-in, reordenar, cobrar, no asistió. */
   canManage: boolean;
-  /** Fisio/admin: iniciar y finalizar consulta en turnos propios. */
+  /** Fisio: iniciar consulta y retornar a atención en turnos propios. */
   canAttend: boolean;
   currentStaffId: string | null;
 };
@@ -111,7 +111,7 @@ export function QueueBoard({
     if (item.estado !== "pendiente" && item.estado !== "en_sala_espera") {
       return false;
     }
-    if (canManage) return true;
+    // Solo el fisioterapeuta inicia consulta en sus turnos.
     return canAttend && isOwnTurn(item);
   }
 
@@ -384,9 +384,9 @@ export function QueueBoard({
           expectedVersion={chargeItem.version}
           patientNombre={chargeItem.patientNombre}
           onClose={() => setChargeItem(null)}
-          onPaid={() => {
+          onPaid={(paymentId) => {
             setChargeItem(null);
-            refreshMsg("Pago registrado");
+            router.push(`/app/caja/pagos/${paymentId}`);
           }}
         />
       ) : null}

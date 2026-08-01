@@ -10,7 +10,7 @@ import {
   type NotificationItem,
 } from "@/components/notifications/NotificationCenter";
 import { ThemeSelector } from "@/components/theme/ThemeSelector";
-import { RoleCapabilities } from "@/lib/roles";
+import type { MenuKey } from "@/lib/permissions/menu-catalog";
 
 const SIDEBAR_KEY = "terafis_sidebar_open";
 
@@ -19,60 +19,44 @@ type IconProps = { className?: string };
 const links: Array<{
   href: string;
   label: string;
+  menuKey: MenuKey;
   icon: (props: IconProps) => ReactNode;
-  adminOnly?: boolean;
 }> = [
-  { href: "/app", label: "Inicio", icon: HomeIcon },
-  { href: "/app/pacientes", label: "Pacientes", icon: UsersIcon },
-  { href: "/app/doctores", label: "Doctores", icon: DoctorIcon },
-  { href: "/app/agenda", label: "Agenda", icon: CalendarIcon },
-  { href: "/app/cola", label: "Cola", icon: QueueIcon },
-  { href: "/app/servicios", label: "Servicios", icon: ServicesIcon },
-  { href: "/app/caja", label: "Caja", icon: CashIcon },
-  { href: "/app/inventario", label: "Inventario", icon: BoxIcon },
-  { href: "/app/reportes", label: "Reportes", icon: ChartIcon },
-  { href: "/app/planes", label: "Planes", icon: PlanIcon },
-  { href: "/app/staff", label: "Staff", icon: StaffIcon },
-  { href: "/app/auditoria", label: "Auditoría", icon: AuditIcon, adminOnly: true },
-  { href: "/app/configuracion", label: "Configuración", icon: SettingsIcon },
+  { href: "/app", label: "Inicio", menuKey: "inicio", icon: HomeIcon },
+  { href: "/app/pacientes", label: "Pacientes", menuKey: "pacientes", icon: UsersIcon },
+  { href: "/app/doctores", label: "Doctores", menuKey: "doctores", icon: DoctorIcon },
+  { href: "/app/agenda", label: "Agenda", menuKey: "agenda", icon: CalendarIcon },
+  { href: "/app/cola", label: "Cola", menuKey: "cola", icon: QueueIcon },
+  { href: "/app/servicios", label: "Servicios", menuKey: "servicios", icon: ServicesIcon },
+  { href: "/app/caja", label: "Caja", menuKey: "caja", icon: CashIcon },
+  { href: "/app/inventario", label: "Inventario", menuKey: "inventario", icon: BoxIcon },
+  { href: "/app/reportes", label: "Reportes", menuKey: "reportes", icon: ChartIcon },
+  { href: "/app/planes", label: "Planes", menuKey: "planes", icon: PlanIcon },
+  { href: "/app/staff", label: "Staff", menuKey: "staff", icon: StaffIcon },
+  { href: "/app/auditoria", label: "Auditoría", menuKey: "auditoria", icon: AuditIcon },
+  { href: "/app/permisos", label: "Permisos", menuKey: "permisos", icon: LockIcon },
+  { href: "/app/configuracion", label: "Configuración", menuKey: "configuracion", icon: SettingsIcon },
 ];
 
 export function AppShell({
   userProfile,
   clinicId,
   notifications,
+  allowedMenuKeys,
   children,
 }: {
   userProfile: UserMenuProfile;
   clinicId: string | null;
   notifications: NotificationItem[];
+  /** Claves de menú efectivas; si null, muestra todo menos permisos (modo local). */
+  allowedMenuKeys: MenuKey[] | null;
   children: ReactNode;
 }) {
-  const staffRole = userProfile.rol;
-  const caps = staffRole ? RoleCapabilities[staffRole] : null;
   const visibleLinks = links.filter((l) => {
-    if (!caps) return !l.adminOnly;
-    if (l.adminOnly && !caps.verAuditLog) return false;
-    // Caja: solo recepción y admin (verPagos). Fisio no ve el módulo.
-    if (l.href === "/app/caja" && !caps.verPagos) {
-      return false;
+    if (!allowedMenuKeys) {
+      return l.menuKey !== "permisos";
     }
-    if (l.href === "/app/reportes" && !caps.verPagos) {
-      return false;
-    }
-    // Planes terapéuticos: fisio/admin. Expediente clínico de recepción no incluye planes.
-    if (
-      l.href === "/app/planes" &&
-      (staffRole === "recepcionista" || !caps.verExpedienteClinico)
-    ) {
-      return false;
-    }
-    if (l.href === "/app/staff" && !caps.gestionarStaff) return false;
-    if (l.href === "/app/doctores" && staffRole === "terapeuta") return false;
-    if (l.href === "/app/inventario" && !caps.verPagos && staffRole === "terapeuta") {
-      return false;
-    }
-    return true;
+    return allowedMenuKeys.includes(l.menuKey);
   });
   const pathname = usePathname();
   const router = useRouter();
@@ -101,7 +85,7 @@ export function AppShell({
 
   return (
     <div className="flex min-h-full flex-1 flex-col">
-      <header className="border-brand/15 bg-surface/95 sticky top-0 z-40 border-b backdrop-blur">
+      <header className="border-brand/15 bg-surface/95 sticky top-0 z-40 border-b backdrop-blur print:hidden">
         <div className="flex h-14 items-center justify-between gap-3 px-3 sm:px-4">
           <div className="flex min-w-0 items-center gap-2 sm:gap-3">
             <button
@@ -135,7 +119,7 @@ export function AppShell({
         <aside
           id="app-sidebar"
           className={[
-            "border-brand/15 bg-surface hidden shrink-0 overflow-x-hidden overflow-y-auto border-r transition-[width] duration-200 ease-out md:block",
+            "border-brand/15 bg-surface hidden shrink-0 overflow-x-hidden overflow-y-auto border-r transition-[width] duration-200 ease-out md:block print:hidden",
             showLabels ? "md:w-56" : "md:w-14",
           ].join(" ")}
         >
@@ -161,7 +145,7 @@ export function AppShell({
           </nav>
         </aside>
 
-        <div className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 pb-24 sm:px-6 sm:py-8 md:pb-8">
+        <div className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 pb-24 sm:px-6 sm:py-8 md:pb-8 print:max-w-none print:px-0 print:py-0 print:pb-0">
           {children}
         </div>
       </div>
@@ -177,7 +161,7 @@ export function AppShell({
       ) : null}
 
       <div
-        className="fixed inset-x-0 bottom-0 z-50 md:hidden"
+        className="fixed inset-x-0 bottom-0 z-50 md:hidden print:hidden"
         style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
       >
         {mobileMenuOpen ? (
@@ -458,6 +442,28 @@ function AuditIcon({ className }: IconProps) {
       />
       <path
         d="M9.5 10h5M9.5 14h3.5"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function LockIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" aria-hidden>
+      <rect
+        x="5"
+        y="10"
+        width="14"
+        height="10"
+        rx="2"
+        stroke="currentColor"
+        strokeWidth="1.7"
+      />
+      <path
+        d="M8 10V7a4 4 0 0 1 8 0v3"
         stroke="currentColor"
         strokeWidth="1.7"
         strokeLinecap="round"

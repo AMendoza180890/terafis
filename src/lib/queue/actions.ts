@@ -207,12 +207,12 @@ export async function updateQueueEstadoAction(raw: unknown): Promise<ActionResul
   const supabase = await createClient();
 
   // Fisioterapeuta: solo iniciar su propia consulta (pendiente/sala → en_consulta).
-  // Recepción/admin opera check-in, no asistió, etc.
-  if (staff.rol === "terapeuta") {
-    if (parsed.data.nuevoEstado !== "en_consulta") {
+  // Recepción/admin no inician consulta.
+  if (parsed.data.nuevoEstado === "en_consulta") {
+    if (staff.rol !== "terapeuta") {
       return {
         ok: false,
-        error: "Solo puede iniciar consulta en sus turnos asignados",
+        error: "Solo el fisioterapeuta puede iniciar la consulta",
       };
     }
     const { data: row } = await supabase
@@ -230,6 +230,11 @@ export async function updateQueueEstadoAction(raw: unknown): Promise<ActionResul
         error: "El turno debe estar pendiente o en sala de espera",
       };
     }
+  } else if (staff.rol === "terapeuta") {
+    return {
+      ok: false,
+      error: "Solo puede iniciar consulta en sus turnos asignados",
+    };
   }
 
   const { data, error } = await supabase.rpc("update_queue_estado", {

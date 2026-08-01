@@ -5,6 +5,7 @@ import { ActionButton } from "@/components/ui/ActionButton";
 import { getCurrentStaff } from "@/lib/auth/current-staff";
 import { decryptField } from "@/lib/crypto/aes-gcm";
 import { createClient } from "@/lib/supabase/server";
+import { exercisesToDetalle } from "@/lib/treatment-plans/schemas";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -31,7 +32,55 @@ export default async function PlanDetailPage({ params }: Props) {
     .eq("plan_id", id)
     .order("version", { ascending: false });
 
+  const versionIds = ((versions ?? []) as Array<{ id: string }>).map((v) => v.id);
+  const { data: exercises } =
+    versionIds.length > 0
+      ? await supabase
+          .from("treatment_exercises")
+          .select(
+            "plan_version_id, nombre, descripcion, series, repeticiones, orden",
+          )
+          .in("plan_version_id", versionIds)
+          .order("orden", { ascending: true })
+      : { data: [] };
+
   const key = process.env.FIELD_ENCRYPTION_KEY;
+  const decrypt = (cipher: string | null) => {
+    if (!cipher) return "";
+    if (!key) return "(cifrado)";
+    try {
+      return decryptField(cipher, key);
+    } catch {
+      return "(no descifrable)";
+    }
+  };
+
+  const byVersionRows = new Map<
+    string,
+    Array<{
+      nombre: string;
+      descripcion: string | null;
+      series: number | null;
+      repeticiones: number | null;
+    }>
+  >();
+  for (const e of (exercises ?? []) as Array<{
+    plan_version_id: string;
+    nombre: string;
+    descripcion: string | null;
+    series: number | null;
+    repeticiones: number | null;
+  }>) {
+    const arr = byVersionRows.get(e.plan_version_id) ?? [];
+    arr.push({
+      nombre: e.nombre,
+      descripcion: decrypt(e.descripcion),
+      series: e.series,
+      repeticiones: e.repeticiones,
+    });
+    byVersionRows.set(e.plan_version_id, arr);
+  }
+
   const rows = (
     (versions ?? []) as Array<{
       id: string;
@@ -44,8 +93,9 @@ export default async function PlanDetailPage({ params }: Props) {
     }>
   ).map((v) => ({
     ...v,
-    diagnostico: v.diagnostico && key ? safeDecrypt(v.diagnostico, key) : "(cifrado)",
-    objetivo: v.objetivo && key ? safeDecrypt(v.objetivo, key) : "(cifrado)",
+    diagnostico: v.diagnostico ? decrypt(v.diagnostico) || "(cifrado)" : "",
+    objetivo: v.objetivo ? decrypt(v.objetivo) || "(cifrado)" : "",
+    ejerciciosDetalle: exercisesToDetalle(byVersionRows.get(v.id) ?? []),
   }));
 
   const latest = rows[0];
@@ -79,6 +129,13 @@ export default async function PlanDetailPage({ params }: Props) {
             <p>
               <strong>Objetivo:</strong> {v.objetivo}
             </p>
+            {v.ejerciciosDetalle ? (
+              <p className="mt-2 whitespace-pre-wrap">
+                <strong>Ejercicio, series y repeticiones:</strong>
+                {"\n"}
+                {v.ejerciciosDetalle}
+              </p>
+            ) : null}
           </article>
         ))}
       </section>
@@ -87,21 +144,22 @@ export default async function PlanDetailPage({ params }: Props) {
         <NewVersionForm
           planId={id}
           defaults={{
-            diagnostico: latest.diagnostico === "(cifrado)" ? "" : latest.diagnostico,
-            objetivo: latest.objetivo === "(cifrado)" ? "" : latest.objetivo,
+            diagnostico:
+              latest.diagnostico === "(cifrado)" ||
+              latest.diagnostico === "(no descifrable)"
+                ? ""
+                : latest.diagnostico,
+            objetivo:
+              latest.objetivo === "(cifrado)" ||
+              latest.objetivo === "(no descifrable)"
+                ? ""
+                : latest.objetivo,
             frecuencia: latest.frecuencia,
             semanas: latest.duracion_estimada_semanas ?? undefined,
+            ejerciciosDetalle: latest.ejerciciosDetalle,
           }}
         />
       ) : null}
     </main>
   );
-}
-
-function safeDecrypt(cipher: string, key: string): string {
-  try {
-    return decryptField(cipher, key);
-  } catch {
-    return "(no descifrable)";
-  }
 }

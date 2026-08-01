@@ -2,6 +2,8 @@ import { ActionButton } from "@/components/ui/ActionButton";
 import { getCurrentStaff } from "@/lib/auth/current-staff";
 import { clinicTodayIso, DEFAULT_TZ } from "@/lib/datetime/clinic-tz";
 import { formatMoney } from "@/lib/money/totals";
+import { getEffectiveMenuAccessForStaff } from "@/lib/permissions/resolve";
+import type { MenuKey } from "@/lib/permissions/menu-catalog";
 import { revenueCents } from "@/lib/reports/aggregates";
 import { createClient } from "@/lib/supabase/server";
 
@@ -15,9 +17,13 @@ export default async function AppHomePage() {
   let enEspera = 0;
   let ingresosHoy = "C$ 0.00";
   let alertasStock = 0;
+  let allowed = new Set<MenuKey>();
 
   if (staff) {
     try {
+      const menuAccess = await getEffectiveMenuAccessForStaff(staff);
+      allowed = new Set(menuAccess.effectiveKeys);
+
       const supabase = await createClient();
       const { data: cfg } = await supabase
         .from("clinic_config")
@@ -30,6 +36,9 @@ export default async function AppHomePage() {
       const start = new Date(`${fechaClinica}T00:00:00`);
       const end = new Date(start);
       end.setDate(end.getDate() + 1);
+
+      const canSeeCaja = allowed.has("caja");
+      const canSeeInventario = allowed.has("inventario");
 
       const [
         { count: apptCount },
@@ -48,8 +57,13 @@ export default async function AppHomePage() {
           .select("id", { count: "exact", head: true })
           .eq("estado", "en_sala_espera")
           .eq("fecha", fechaClinica),
-        staff.rol === "terapeuta"
-          ? Promise.resolve({
+        canSeeCaja
+          ? supabase
+              .from("payments")
+              .select("monto, metodo_pago, estado, cajero_id, fecha_pago")
+              .eq("estado", "pagado")
+              .gte("fecha_pago", start.toISOString())
+          : Promise.resolve({
               data: [] as Array<{
                 monto: string;
                 metodo_pago: string;
@@ -57,16 +71,14 @@ export default async function AppHomePage() {
                 cajero_id: string | null;
                 fecha_pago: string | null;
               }>,
-            })
-          : supabase
-              .from("payments")
-              .select("monto, metodo_pago, estado, cajero_id, fecha_pago")
-              .eq("estado", "pagado")
-              .gte("fecha_pago", start.toISOString()),
-        supabase
-          .from("product_stock")          .select("product_id")
-          .eq("bajo_minimo", true)
-          .eq("activo", true),
+            }),
+        canSeeInventario
+          ? supabase
+              .from("product_stock")
+              .select("product_id")
+              .eq("bajo_minimo", true)
+              .eq("activo", true)
+          : Promise.resolve({ data: [] as Array<{ product_id: string }> }),
       ]);
 
       citasHoy = apptCount ?? 0;
@@ -88,6 +100,13 @@ export default async function AppHomePage() {
     }
   }
 
+  const showCola = !staff || allowed.has("cola");
+  const showInventario = allowed.has("inventario");
+  const showReportes = allowed.has("reportes");
+  const showCaja = allowed.has("caja");
+  const showAgenda = allowed.has("agenda");
+  const showPacientes = allowed.has("pacientes");
+
   return (
     <main>
       <h1 className="text-foreground font-serif text-3xl">Panel operativo</h1>
@@ -106,29 +125,53 @@ export default async function AppHomePage() {
           <p className="text-muted text-sm">En sala de espera</p>
           <p className="text-brand mt-1 text-3xl font-semibold">{enEspera}</p>
         </div>
-        <div className="border-brand/15 bg-surface rounded-xl border p-5">
-          <p className="text-muted text-sm">Ingresos del día</p>
-          <p className="text-brand mt-1 text-3xl font-semibold">
-            {staff?.rol === "terapeuta" ? "—" : ingresosHoy}
-          </p>
-        </div>
-        <div className="border-brand/15 bg-surface rounded-xl border p-5">
-          <p className="text-muted text-sm">Alertas de stock</p>
-          <p className="text-brand mt-1 text-3xl font-semibold">{alertasStock}</p>
-        </div>
+        {showCaja ? (
+          <div className="border-brand/15 bg-surface rounded-xl border p-5">
+            <p className="text-muted text-sm">Ingresos del día</p>
+            <p className="text-brand mt-1 text-3xl font-semibold">
+              {ingresosHoy}
+            </p>
+          </div>
+        ) : null}
+        {showInventario ? (
+          <div className="border-brand/15 bg-surface rounded-xl border p-5">
+            <p className="text-muted text-sm">Alertas de stock</p>
+            <p className="text-brand mt-1 text-3xl font-semibold">
+              {alertasStock}
+            </p>
+          </div>
+        ) : null}
       </div>
 
       <div className="mt-8 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-3">
-        <ActionButton href="/app/cola">Abrir cola del día</ActionButton>
-        <ActionButton href="/app/inventario" className="!bg-accent">
-          Inventario
-        </ActionButton>
-        <ActionButton href="/app/reportes" variant="secondary">
-          Reportes
-        </ActionButton>
-        <ActionButton href="/app/caja" variant="secondary">
-          Ver caja
-        </ActionButton>
+        {showCola ? (
+          <ActionButton href="/app/cola">Abrir cola del día</ActionButton>
+        ) : null}
+        {showAgenda ? (
+          <ActionButton href="/app/agenda" variant="secondary">
+            Agenda
+          </ActionButton>
+        ) : null}
+        {showPacientes ? (
+          <ActionButton href="/app/pacientes" variant="secondary">
+            Pacientes
+          </ActionButton>
+        ) : null}
+        {showInventario ? (
+          <ActionButton href="/app/inventario" className="!bg-accent">
+            Inventario
+          </ActionButton>
+        ) : null}
+        {showReportes ? (
+          <ActionButton href="/app/reportes" variant="secondary">
+            Reportes
+          </ActionButton>
+        ) : null}
+        {showCaja ? (
+          <ActionButton href="/app/caja" variant="secondary">
+            Ver caja
+          </ActionButton>
+        ) : null}
       </div>
     </main>
   );

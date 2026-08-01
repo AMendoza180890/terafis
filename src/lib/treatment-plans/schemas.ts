@@ -1,35 +1,89 @@
 import { z } from "zod";
 
-export const ExerciseSchema = z.object({
-  nombre: z.string().trim().min(1).max(200),
-  descripcion: z.string().trim().max(5000).optional(),
-  series: z.coerce.number().int().positive().max(50).optional(),
-  repeticiones: z.coerce.number().int().positive().max(500).optional(),
-  mediaUrl: z.string().url().optional().or(z.literal("")),
-  orden: z.coerce.number().int().min(0).default(0),
+/** Detalle libre de ejercicios, series y repeticiones (textarea). */
+export const EjerciciosDetalleSchema = z
+  .string()
+  .trim()
+  .min(1, "Indique ejercicios, series y repeticiones")
+  .max(10000);
+
+export const TreatmentPlanFieldsSchema = z.object({
+  diagnostico: z.string().trim().min(1, "Diagnóstico requerido").max(5000),
+  objetivo: z.string().trim().min(1, "Objetivo requerido").max(5000),
+  frecuencia: z.string().trim().min(1, "Frecuencia requerida").max(80),
+  duracionEstimadaSemanas: z.coerce
+    .number()
+    .int()
+    .positive()
+    .max(104)
+    .optional(),
+  ejerciciosDetalle: EjerciciosDetalleSchema,
 });
 
-export const CreateTreatmentPlanSchema = z.object({
+export type TreatmentPlanFieldsInput = z.infer<typeof TreatmentPlanFieldsSchema>;
+
+/** Convierte el texto libre en una fila de ejercicio para la BD. */
+export function ejerciciosDetalleToRows(detalle: string) {
+  return [
+    {
+      nombre: "Ejercicios, series y repeticiones",
+      descripcion: detalle,
+      series: undefined as number | undefined,
+      repeticiones: undefined as number | undefined,
+      mediaUrl: "" as string | undefined,
+      orden: 0,
+    },
+  ];
+}
+
+/** Reconstruye el textarea desde filas de ejercicios (legado o formato nuevo). */
+export function exercisesToDetalle(
+  exercises: Array<{
+    nombre: string;
+    descripcion?: string | null;
+    series?: number | null;
+    repeticiones?: number | null;
+  }>,
+): string {
+  if (exercises.length === 0) return "";
+  if (
+    exercises.length === 1 &&
+    exercises[0]!.nombre === "Ejercicios, series y repeticiones"
+  ) {
+    return exercises[0]!.descripcion?.trim() ?? "";
+  }
+  return exercises
+    .map((e) => {
+      const parts = [e.nombre];
+      if (e.series != null || e.repeticiones != null) {
+        parts.push(
+          `${e.series ?? "—"} series × ${e.repeticiones ?? "—"} repeticiones`,
+        );
+      }
+      if (e.descripcion?.trim()) parts.push(e.descripcion.trim());
+      return parts.join(" — ");
+    })
+    .join("\n");
+}
+
+export const CreateTreatmentPlanSchema = TreatmentPlanFieldsSchema.extend({
   patientId: z.string().uuid(),
   terapeutaId: z.string().uuid().optional(),
-  protocolId: z.string().uuid().optional(),
-  diagnostico: z.string().trim().min(1).max(5000),
-  objetivo: z.string().trim().min(1).max(5000),
-  frecuencia: z.string().trim().min(1).max(80),
-  duracionEstimadaSemanas: z.coerce.number().int().positive().max(104).optional(),
-  exercises: z.array(ExerciseSchema).default([]),
+  protocolId: z
+    .string()
+    .uuid()
+    .optional()
+    .or(z.literal(""))
+    .transform((v) => (v === "" ? undefined : v)),
 });
 
 export type CreateTreatmentPlanInput = z.infer<typeof CreateTreatmentPlanSchema>;
 
-export const NewPlanVersionSchema = z.object({
+export const NewPlanVersionSchema = TreatmentPlanFieldsSchema.extend({
   planId: z.string().uuid(),
-  diagnostico: z.string().trim().min(1).max(5000),
-  objetivo: z.string().trim().min(1).max(5000),
-  frecuencia: z.string().trim().min(1).max(80),
-  duracionEstimadaSemanas: z.coerce.number().int().positive().max(104).optional(),
-  exercises: z.array(ExerciseSchema).default([]),
 });
+
+export type NewPlanVersionInput = z.infer<typeof NewPlanVersionSchema>;
 
 export const DEFAULT_PROTOCOLS = [
   {
@@ -38,16 +92,9 @@ export const DEFAULT_PROTOCOLS = [
     descripcion: "Protocolo base de estabilización lumbar",
     exercises: [
       {
-        nombre: "Puente de glúteos",
-        series: 3,
-        repeticiones: 12,
-        descripcion: "Activación glútea en decúbito",
-      },
-      {
-        nombre: "Bird-dog",
-        series: 3,
-        repeticiones: 10,
-        descripcion: "Control motor en cuadrupedia",
+        nombre: "Ejercicios, series y repeticiones",
+        descripcion:
+          "Puente de glúteos: 3 series × 12 repeticiones — Activación glútea en decúbito.\nBird-dog: 3 series × 10 repeticiones — Control motor en cuadrupedia.",
       },
     ],
   },
@@ -57,14 +104,9 @@ export const DEFAULT_PROTOCOLS = [
     descripcion: "Movilidad progresiva de hombro",
     exercises: [
       {
-        nombre: "Péndulos de Codman",
-        series: 2,
-        repeticiones: 20,
-      },
-      {
-        nombre: "Deslizamiento en pared",
-        series: 3,
-        repeticiones: 10,
+        nombre: "Ejercicios, series y repeticiones",
+        descripcion:
+          "Péndulos de Codman: 2 series × 20 repeticiones.\nDeslizamiento en pared: 3 series × 10 repeticiones.",
       },
     ],
   },
@@ -74,14 +116,9 @@ export const DEFAULT_PROTOCOLS = [
     descripcion: "Propiocepción y carga progresiva",
     exercises: [
       {
-        nombre: "Equilibrio unipodal",
-        series: 3,
-        repeticiones: 30,
-      },
-      {
-        nombre: "Banda elástica eversión",
-        series: 3,
-        repeticiones: 15,
+        nombre: "Ejercicios, series y repeticiones",
+        descripcion:
+          "Equilibrio unipodal: 3 series × 30 s.\nBanda elástica eversión: 3 series × 15 repeticiones.",
       },
     ],
   },

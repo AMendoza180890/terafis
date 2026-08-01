@@ -13,7 +13,7 @@ type Props = {
   expectedVersion: number;
   patientNombre: string;
   onClose: () => void;
-  onPaid: () => void;
+  onPaid: (paymentId: string) => void;
 };
 
 /** Clave ≤64 chars (columna payments.idempotency_key). */
@@ -102,7 +102,7 @@ export function ChargeModal({
         setError(result.error);
         return;
       }
-      onPaid();
+      onPaid(result.id);
     });
   }
 

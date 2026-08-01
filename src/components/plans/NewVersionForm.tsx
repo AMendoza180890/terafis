@@ -16,6 +16,7 @@ export function NewVersionForm({
     objetivo: string;
     frecuencia: string;
     semanas?: number;
+    ejerciciosDetalle?: string;
   };
 }) {
   const router = useRouter();
@@ -37,10 +38,12 @@ export function NewVersionForm({
             duracionEstimadaSemanas: fd.get("semanas")
               ? Number(fd.get("semanas"))
               : undefined,
-            exercises: [],
+            ejerciciosDetalle: String(fd.get("ejerciciosDetalle") ?? ""),
           });
           setMessage(
-            result.ok ? `Nueva versión ${result.version} guardada` : result.error,
+            result.ok
+              ? `Nueva versión ${result.version} guardada`
+              : result.error,
           );
           if (result.ok) router.refresh();
         });
@@ -85,6 +88,18 @@ export function NewVersionForm({
           name="semanas"
           type="number"
           defaultValue={defaults.semanas}
+          className="border-brand/20 bg-background w-full rounded-md border px-3 py-2"
+        />
+      </label>
+      <label className="block text-sm">
+        <span className="text-muted mb-1 block">
+          Ejercicio, series y repeticiones
+        </span>
+        <AutoTextarea
+          name="ejerciciosDetalle"
+          required
+          defaultValue={defaults.ejerciciosDetalle ?? ""}
+          minRows={4}
           className="border-brand/20 bg-background w-full rounded-md border px-3 py-2"
         />
       </label>

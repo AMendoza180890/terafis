@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 
 import { CajaEarningsChart } from "@/components/caja/CajaEarningsChart";
@@ -236,12 +237,13 @@ export function CajaDashboard({ payments, timezone }: Props) {
                 <th className="px-4 py-3">Método</th>
                 <th className="px-4 py-3">Total cobrado</th>
                 <th className="px-4 py-3">Cambio / Ref.</th>
+                <th className="px-4 py-3 text-right">Factura</th>
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-muted px-4 py-8 text-center">
+                  <td colSpan={8} className="text-muted px-4 py-8 text-center">
                     Sin cobros para el filtro seleccionado.
                   </td>
                 </tr>
@@ -309,6 +311,14 @@ export function CajaDashboard({ payments, timezone }: Props) {
                             ? `Cambio ${formatCordobas(p.cambio)}`
                             : "—"
                           : (p.referencia ?? "—")}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <Link
+                          href={`/app/caja/pagos/${p.id}`}
+                          className="text-brand text-xs font-medium underline-offset-2 hover:underline"
+                        >
+                          Ver / imprimir
+                        </Link>
                       </td>
                     </tr>
                   );

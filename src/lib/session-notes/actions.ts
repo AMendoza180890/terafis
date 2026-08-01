@@ -12,9 +12,11 @@ import { RoleCapabilities } from "@/lib/roles";
 import {
   CreateSessionNoteSchema,
   ListSessionNotesFilterSchema,
+  sessionNoteHasTreatmentPlan,
   UpdateSessionNoteSchema,
 } from "@/lib/session-notes/schemas";
 import { createClient } from "@/lib/supabase/server";
+import { ensureTreatmentPlanFromSessionAction } from "@/lib/treatment-plans/actions";
 
 export type SessionNoteView = {
   id: string;
@@ -80,6 +82,20 @@ export async function createSessionNoteAction(raw: unknown): Promise<ActionResul
         error: "No se pueden agregar seguimientos a un expediente cerrado",
       };
     }
+  }
+
+  const planResult = sessionNoteHasTreatmentPlan(input)
+    ? await ensureTreatmentPlanFromSessionAction({
+        patientId: input.patientId,
+        diagnostico: input.diagnostico,
+        objetivo: input.objetivo,
+        frecuencia: input.frecuencia,
+        duracionEstimadaSemanas: input.duracionEstimadaSemanas,
+        ejerciciosDetalle: input.ejerciciosDetalle,
+      })
+    : null;
+  if (planResult && !planResult.ok) {
+    return { ok: false, error: planResult.error };
   }
 
   const baseRow = {

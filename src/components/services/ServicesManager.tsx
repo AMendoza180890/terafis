@@ -28,10 +28,10 @@ type ServiceRow = {
 
 export function ServicesManager({
   services,
-  isAdmin,
+  canManage,
 }: {
   services: ServiceRow[];
-  isAdmin: boolean;
+  canManage: boolean;
 }) {
   const router = useRouter();
   const toast = useToast();
@@ -50,7 +50,7 @@ export function ServicesManager({
               <th className="px-4 py-3">Costo</th>
               <th className="px-4 py-3">Duración</th>
               <th className="px-4 py-3">Estado</th>
-              {isAdmin ? <th className="px-4 py-3 text-right">Acciones</th> : null}
+              {canManage ? <th className="px-4 py-3 text-right">Acciones</th> : null}
             </tr>
           </thead>
           <tbody>
@@ -70,7 +70,7 @@ export function ServicesManager({
                     {s.duracion_minutos ? `${s.duracion_minutos} min` : "—"}
                   </td>
                   <td className="px-4 py-3">{s.activo ? "Activo" : "Inactivo"}</td>
-                  {isAdmin ? (
+                  {canManage ? (
                     <td className="px-4 py-3">
                       <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
                         <ActionButton
@@ -113,7 +113,7 @@ export function ServicesManager({
         </table>
       </div>
 
-      {isAdmin ? (
+      {canManage ? (
         <div className="grid gap-6 lg:grid-cols-2">
           <form
             className="border-brand/15 bg-surface space-y-3 rounded-xl border p-5"

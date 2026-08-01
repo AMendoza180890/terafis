@@ -8,12 +8,22 @@ import {
 } from "@/lib/session-notes/schemas";
 import { RoleCapabilities } from "@/lib/roles";
 
-describe("CreateSessionNoteSchema", () => {
-  const patientId = "11111111-1111-4111-8111-111111111111";
+const patientId = "11111111-1111-4111-8111-111111111111";
+const clinicalId = "22222222-2222-4222-8222-222222222222";
 
-  it("acepta seguimiento mínimo", () => {
+const planFields = {
+  diagnostico: "Lumbalgia mecánica",
+  objetivo: "Reducir EVA < 3",
+  frecuencia: "2x/semana",
+  ejerciciosDetalle: "Puente — 3 series × 12 repeticiones",
+};
+
+describe("CreateSessionNoteSchema", () => {
+  it("acepta seguimiento con plan de tratamiento", () => {
     const parsed = CreateSessionNoteSchema.safeParse({
       patientId,
+      clinicalId,
+      ...planFields,
       notasEvolucion: "Mejora de movilidad",
       tratamiento: "Ultrasonido 10 min",
       observaciones: "Toleró bien",
@@ -21,9 +31,28 @@ describe("CreateSessionNoteSchema", () => {
     expect(parsed.success).toBe(true);
   });
 
+  it("acepta seguimiento sin plan de tratamiento", () => {
+    const parsed = CreateSessionNoteSchema.safeParse({
+      patientId,
+      clinicalId,
+      notasEvolucion: "Sin plan",
+    });
+    expect(parsed.success).toBe(true);
+  });
+
+  it("rechaza plan incompleto si se empezó a llenar", () => {
+    const parsed = CreateSessionNoteSchema.safeParse({
+      patientId,
+      clinicalId,
+      diagnostico: "Solo diagnóstico",
+    });
+    expect(parsed.success).toBe(false);
+  });
+
   it("acepta EVA vacío como undefined", () => {
     const parsed = CreateSessionNoteSchema.safeParse({
       patientId,
+      clinicalId,
       dolorEva: "",
     });
     expect(parsed.success).toBe(true);
@@ -33,6 +62,7 @@ describe("CreateSessionNoteSchema", () => {
   it("rechaza EVA fuera de rango", () => {
     const parsed = CreateSessionNoteSchema.safeParse({
       patientId,
+      clinicalId,
       dolorEva: 12,
     });
     expect(parsed.success).toBe(false);
@@ -40,10 +70,11 @@ describe("CreateSessionNoteSchema", () => {
 });
 
 describe("UpdateSessionNoteSchema", () => {
-  it("exige noteId y permite editar todos los campos", () => {
+  it("exige noteId y permite editar sin reenviar plan", () => {
     const parsed = UpdateSessionNoteSchema.safeParse({
       noteId: "33333333-3333-4333-8333-333333333333",
-      patientId: "11111111-1111-4111-8111-111111111111",
+      patientId,
+      clinicalId,
       notasEvolucion: "Actualizado",
       tratamiento: "TENS",
       observaciones: "OK",
@@ -55,7 +86,8 @@ describe("UpdateSessionNoteSchema", () => {
 
   it("rechaza sin noteId", () => {
     const parsed = UpdateSessionNoteSchema.safeParse({
-      patientId: "11111111-1111-4111-8111-111111111111",
+      patientId,
+      clinicalId,
       notasEvolucion: "Sin id",
     });
     expect(parsed.success).toBe(false);
@@ -65,7 +97,7 @@ describe("UpdateSessionNoteSchema", () => {
 describe("ListSessionNotesFilterSchema", () => {
   it("acepta filtro por fechas y atención", () => {
     const parsed = ListSessionNotesFilterSchema.safeParse({
-      patientId: "11111111-1111-4111-8111-111111111111",
+      patientId,
       desde: "2026-07-01",
       hasta: "2026-07-30",
       atencion: "none",
@@ -77,7 +109,7 @@ describe("ListSessionNotesFilterSchema", () => {
 describe("AddPatientToAttendSchema", () => {
   it("acepta paciente + terapeuta", () => {
     const parsed = AddPatientToAttendSchema.safeParse({
-      patientId: "11111111-1111-4111-8111-111111111111",
+      patientId,
       terapeutaId: "22222222-2222-4222-8222-222222222222",
       timezone: "America/Managua",
     });

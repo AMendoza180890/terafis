@@ -4,6 +4,11 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 
 import { useToast } from "@/components/notifications/ToastProvider";
+import {
+  emptyPlanForm,
+  TreatmentPlanFields,
+  type PlanFormState,
+} from "@/components/plans/TreatmentPlanFields";
 import { FinalizeServicesModal } from "@/components/queue/FinalizeServicesModal";
 import { AutoTextarea } from "@/components/ui/AutoTextarea";
 import { formatInClinicTz, DEFAULT_TZ } from "@/lib/datetime/clinic-tz";
@@ -14,6 +19,7 @@ import {
   updateSessionNoteAction,
   type SessionNoteView,
 } from "@/lib/session-notes/actions";
+import { getLatestTreatmentPlanForPatientAction } from "@/lib/treatment-plans/actions";
 
 type AppointmentOpt = { id: string; label: string };
 type ServiceOpt = { id: string; titulo: string; costo: string };
@@ -51,6 +57,8 @@ type Props = {
   services?: ServiceOpt[];
   activeConsultation?: ActiveConsultation | null;
   canFinalizeConsultation?: boolean;
+  /** Solo fisioterapeuta. */
+  canStartConsultation?: boolean;
   /** Recepción: solo historial visible, sin crear/editar/finalizar. */
   readOnly?: boolean;
 };
@@ -63,6 +71,7 @@ export function SessionNotesPanel({
   services = [],
   activeConsultation = null,
   canFinalizeConsultation = false,
+  canStartConsultation = false,
   readOnly = false,
 }: Props) {
   const router = useRouter();
@@ -77,6 +86,7 @@ export function SessionNotesPanel({
     ...emptyForm(),
     appointmentId: activeConsultation?.appointmentId ?? "",
   }));
+  const [planForm, setPlanForm] = useState<PlanFormState>(emptyPlanForm);
   /** null = nuevo; string = nota guardada (bloqueada o en edición). */
   const [savedNoteId, setSavedNoteId] = useState<string | null>(null);
   const [editing, setEditing] = useState(true);
@@ -96,6 +106,23 @@ export function SessionNotesPanel({
       );
     }
   }, [activeConsultation, savedNoteId]);
+
+  function loadLatestPlan() {
+    startTransition(async () => {
+      const res = await getLatestTreatmentPlanForPatientAction(patientId);
+      if (!res.ok || !res.plan) return;
+      setPlanForm({
+        diagnostico: res.plan.diagnostico,
+        objetivo: res.plan.objetivo,
+        frecuencia: res.plan.frecuencia,
+        semanas:
+          res.plan.duracionEstimadaSemanas != null
+            ? String(res.plan.duracionEstimadaSemanas)
+            : "",
+        ejerciciosDetalle: res.plan.ejerciciosDetalle,
+      });
+    });
+  }
 
   function load() {
     startTransition(async () => {
@@ -131,6 +158,20 @@ export function SessionNotesPanel({
         ...emptyForm(),
         appointmentId: activeConsultation?.appointmentId ?? "",
       });
+      setPlanForm(emptyPlanForm());
+      const planRes = await getLatestTreatmentPlanForPatientAction(patientId);
+      if (planRes.ok && planRes.plan) {
+        setPlanForm({
+          diagnostico: planRes.plan.diagnostico,
+          objetivo: planRes.plan.objetivo,
+          frecuencia: planRes.plan.frecuencia,
+          semanas:
+            planRes.plan.duracionEstimadaSemanas != null
+              ? String(planRes.plan.duracionEstimadaSemanas)
+              : "",
+          ejerciciosDetalle: planRes.plan.ejerciciosDetalle,
+        });
+      }
     });
   }, [patientId, clinicalId]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -149,6 +190,7 @@ export function SessionNotesPanel({
       ...emptyForm(),
       appointmentId: consultation?.appointmentId ?? "",
     });
+    loadLatestPlan();
   }
 
   function loadNoteIntoForm(n: SessionNoteView) {
@@ -165,8 +207,9 @@ export function SessionNotesPanel({
   }
 
   const fieldsLocked = Boolean(savedNoteId) && !editing;
-  const canStartConsultation =
-    canFinalizeConsultation &&
+  const isNewNote = !savedNoteId;
+  const canShowStartConsultation =
+    canStartConsultation &&
     Boolean(consultation) &&
     consultation?.estado !== "en_consulta";
   const canShowFinalize =
@@ -201,6 +244,13 @@ export function SessionNotesPanel({
     current: ActiveConsultation,
   ): Promise<ActiveConsultation | null> {
     if (current.estado === "en_consulta") return current;
+    if (!canStartConsultation) {
+      toast.error(
+        "No se puede finalizar",
+        "La consulta debe estar iniciada por el fisioterapeuta",
+      );
+      return null;
+    }
     const res = await updateQueueEstadoAction({
       queueId: current.queueId,
       expectedVersion: current.version,
@@ -225,6 +275,15 @@ export function SessionNotesPanel({
       form.appointmentId ||
       consultation?.appointmentId ||
       "";
+    const planPayload = {
+      diagnostico: planForm.diagnostico,
+      objetivo: planForm.objetivo,
+      frecuencia: planForm.frecuencia,
+      duracionEstimadaSemanas: planForm.semanas
+        ? Number(planForm.semanas)
+        : undefined,
+      ejerciciosDetalle: planForm.ejerciciosDetalle,
+    };
     const payload = {
       patientId,
       clinicalId,
@@ -234,6 +293,7 @@ export function SessionNotesPanel({
       observaciones: form.observaciones,
       rangoMovimiento: form.rangoMovimiento,
       dolorEva: form.dolorEva,
+      ...(isNewNote ? planPayload : {}),
     };
     const res = savedNoteId
       ? await updateSessionNoteAction({ ...payload, noteId: savedNoteId })
@@ -292,7 +352,9 @@ export function SessionNotesPanel({
             <p className="text-muted text-xs">
               {fieldsLocked
                 ? "Puede editar los campos o finalizar la consulta."
-                : "Registre evolución, tratamiento y observaciones de la sesión."}
+                : isNewNote
+                  ? "Registre la sesión. El plan de tratamiento es opcional."
+                  : "Actualice evolución, tratamiento y observaciones."}
             </p>
           </div>
           {savedNoteId ? (
@@ -387,6 +449,15 @@ export function SessionNotesPanel({
           </label>
         </div>
 
+        {isNewNote ? (
+          <TreatmentPlanFields
+            value={planForm}
+            onChange={setPlanForm}
+            disabled={fieldsLocked}
+            required={false}
+          />
+        ) : null}
+
         <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
           {!fieldsLocked ? (
             <button
@@ -447,7 +518,7 @@ export function SessionNotesPanel({
             </button>
           ) : null}
 
-          {canStartConsultation && !canSaveAndFinalize ? (
+          {canShowStartConsultation && !canSaveAndFinalize ? (
             <button
               type="button"
               disabled={pending}

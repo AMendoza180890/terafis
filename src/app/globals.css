@@ -135,3 +135,20 @@ body {
     text-align: center;
   }
 }
+
+@media print {
+  html,
+  body {
+    background: #fff !important;
+    background-image: none !important;
+    color: #000 !important;
+  }
+
+  body * {
+    box-shadow: none !important;
+  }
+
+  #payment-receipt {
+    break-inside: avoid;
+  }
+}

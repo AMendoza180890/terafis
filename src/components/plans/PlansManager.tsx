@@ -42,16 +42,11 @@ export function PlansManager({
               duracionEstimadaSemanas: fd.get("semanas")
                 ? Number(fd.get("semanas"))
                 : undefined,
-              exercises: [
-                {
-                  nombre: String(fd.get("ejercicio") || "Ejercicio inicial"),
-                  series: Number(fd.get("series") || 3),
-                  repeticiones: Number(fd.get("reps") || 10),
-                  orden: 0,
-                },
-              ],
+              ejerciciosDetalle: String(fd.get("ejerciciosDetalle") ?? ""),
             });
-            setMessage(result.ok ? `Plan creado (v${result.version})` : result.error);
+            setMessage(
+              result.ok ? `Plan creado (v${result.version})` : result.error,
+            );
             if (result.ok) router.refresh();
           });
         }}
@@ -86,7 +81,9 @@ export function PlansManager({
           </select>
         </label>
         <label className="block text-sm">
-          <span className="text-muted mb-1 block">Diagnóstico fisioterapéutico</span>
+          <span className="text-muted mb-1 block">
+            Diagnóstico fisioterapéutico
+          </span>
           <AutoTextarea
             name="diagnostico"
             required
@@ -105,11 +102,20 @@ export function PlansManager({
         </label>
         <Field name="frecuencia" label="Frecuencia (ej. 2x/semana)" required />
         <Field name="semanas" label="Duración semanas" type="number" />
-        <Field name="ejercicio" label="Primer ejercicio" />
-        <div className="grid grid-cols-2 gap-2">
-          <Field name="series" label="Series" type="number" />
-          <Field name="reps" label="Repeticiones" type="number" />
-        </div>
+        <label className="block text-sm">
+          <span className="text-muted mb-1 block">
+            Ejercicio, series y repeticiones
+          </span>
+          <AutoTextarea
+            name="ejerciciosDetalle"
+            required
+            minRows={4}
+            placeholder={
+              "Ej.\nPuente de glúteos — 3 series × 12 repeticiones\nBird-dog — 3 series × 10"
+            }
+            className="border-brand/20 bg-background w-full rounded-md border px-3 py-2"
+          />
+        </label>
         <button
           type="submit"
           disabled={pending || patients.length === 0}
@@ -142,7 +148,9 @@ export function PlansManager({
         </div>
       ) : null}
 
-      {message ? <p className="text-muted text-sm lg:col-span-2">{message}</p> : null}
+      {message ? (
+        <p className="text-muted text-sm lg:col-span-2">{message}</p>
+      ) : null}
     </div>
   );
 }

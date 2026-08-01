@@ -14,6 +14,10 @@ import { createClient } from "@/lib/supabase/server";
 export type ActionResult =
   { ok: true; id?: string; count?: number } | { ok: false; error: string };
 
+function canManageServices(rol: string): boolean {
+  return rol === "admin" || rol === "recepcionista";
+}
+
 export async function createServiceAction(raw: unknown): Promise<ActionResult> {
   const parsed = ServiceSchema.safeParse(raw);
   if (!parsed.success) {
@@ -21,8 +25,8 @@ export async function createServiceAction(raw: unknown): Promise<ActionResult> {
   }
 
   const staff = await requireCurrentStaff();
-  if (staff.rol !== "admin") {
-    return { ok: false, error: "Solo admin gestiona el catálogo" };
+  if (!canManageServices(staff.rol)) {
+    return { ok: false, error: "Sin permiso para gestionar el catálogo" };
   }
 
   const supabase = await createClient();
@@ -57,8 +61,8 @@ export async function createServiceAction(raw: unknown): Promise<ActionResult> {
 
 export async function seedDefaultServicesAction(): Promise<ActionResult> {
   const staff = await requireCurrentStaff();
-  if (staff.rol !== "admin") {
-    return { ok: false, error: "Solo admin" };
+  if (!canManageServices(staff.rol)) {
+    return { ok: false, error: "Sin permiso" };
   }
 
   const supabase = await createClient();
@@ -99,8 +103,8 @@ export async function toggleServiceActiveAction(
   activo: boolean,
 ): Promise<ActionResult> {
   const staff = await requireCurrentStaff();
-  if (staff.rol !== "admin") {
-    return { ok: false, error: "Solo admin" };
+  if (!canManageServices(staff.rol)) {
+    return { ok: false, error: "Sin permiso" };
   }
 
   const supabase = await createClient();
@@ -126,8 +130,8 @@ export async function toggleServiceActiveAction(
 
 export async function updateServiceAction(raw: unknown): Promise<ActionResult> {
   const staff = await requireCurrentStaff();
-  if (staff.rol !== "admin") {
-    return { ok: false, error: "Solo admin gestiona el catálogo" };
+  if (!canManageServices(staff.rol)) {
+    return { ok: false, error: "Sin permiso para gestionar el catálogo" };
   }
 
   const parsed = UpdateServiceSchema.safeParse(raw);

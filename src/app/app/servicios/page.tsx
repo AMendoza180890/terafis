@@ -48,7 +48,12 @@ export default async function ServiciosPage() {
           `costo_aplicado`.
         </p>
       </div>
-      <ServicesManager services={services} isAdmin={staff?.rol === "admin"} />
+      <ServicesManager
+        services={services}
+        canManage={
+          staff?.rol === "admin" || staff?.rol === "recepcionista"
+        }
+      />
     </main>
   );
 }

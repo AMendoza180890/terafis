@@ -31,6 +31,8 @@ type Props = {
   services: ServiceOpt[];
   activeConsultation: ActiveConsultation | null;
   canFinalizeConsultation: boolean;
+  /** Solo fisioterapeuta: botón Iniciar consulta. */
+  canStartConsultation?: boolean;
   canWriteClinical: boolean;
   canManageEpisodes: boolean;
   canWriteSessionNotes: boolean;
@@ -47,6 +49,7 @@ export function ClinicalEpisodesWorkspace({
   services,
   activeConsultation,
   canFinalizeConsultation,
+  canStartConsultation = false,
   canWriteClinical,
   canManageEpisodes,
   canWriteSessionNotes,
@@ -281,7 +284,7 @@ export function ClinicalEpisodesWorkspace({
             <h2 className="font-semibold">Seguimiento y evolución</h2>
             <p className="text-muted mt-1 text-sm">
               {canWriteSessionNotes && !isClosed
-                ? "Notas de este expediente: tratamiento, observaciones e historial."
+                ? "Notas de evolución; el plan de tratamiento es opcional."
                 : isClosed
                   ? "Historial del expediente cerrado (solo consulta)."
                   : "Consulta del historial registrado por el fisioterapeuta."}
@@ -295,6 +298,7 @@ export function ClinicalEpisodesWorkspace({
                 services={services}
                 activeConsultation={activeConsultation}
                 canFinalizeConsultation={canFinalizeConsultation}
+                canStartConsultation={canStartConsultation}
                 readOnly={!canWriteSessionNotes || isClosed}
               />
             </div>
