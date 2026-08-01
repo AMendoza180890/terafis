@@ -3,6 +3,11 @@ import { cookies } from "next/headers";
 import { Source_Sans_3, Source_Serif_4 } from "next/font/google";
 
 import { ThemeScript } from "@/components/theme/ThemeScript";
+import {
+  BRAND_ICON_SRC,
+  BRAND_LOGO_SRC,
+  BRAND_OG_SRC,
+} from "@/lib/brand";
 import { SCHEME_COOKIE } from "@/lib/theme/resolution";
 
 import "./globals.css";
@@ -30,11 +35,11 @@ export const metadata: Metadata = {
   applicationName: "Terafis",
   icons: {
     icon: [
-      { url: "/brand/terafis-icon.png", type: "image/png", sizes: "256x256" },
-      { url: "/brand/terafis-logo.png", type: "image/png" },
+      { url: BRAND_ICON_SRC, type: "image/png", sizes: "256x256" },
+      { url: BRAND_LOGO_SRC, type: "image/png" },
     ],
-    apple: [{ url: "/brand/terafis-icon.png", type: "image/png", sizes: "256x256" }],
-    shortcut: "/brand/terafis-icon.png",
+    apple: [{ url: BRAND_ICON_SRC, type: "image/png", sizes: "256x256" }],
+    shortcut: BRAND_ICON_SRC,
   },
   openGraph: {
     type: "website",
@@ -45,7 +50,7 @@ export const metadata: Metadata = {
       "Gestión clínica para fisioterapia: agenda, expedientes, cola de atención y cobros.",
     images: [
       {
-        url: "/brand/terafis-og.png",
+        url: BRAND_OG_SRC,
         width: 1200,
         height: 630,
         alt: "Terafis — Centro de Fisioterapia",
@@ -57,7 +62,7 @@ export const metadata: Metadata = {
     title: "Terafis — Centro de Fisioterapia",
     description:
       "Gestión clínica para fisioterapia: agenda, expedientes, cola de atención y cobros.",
-    images: ["/brand/terafis-og.png"],
+    images: [BRAND_OG_SRC],
   },
 };
 

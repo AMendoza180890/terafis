@@ -50,7 +50,7 @@ async function maybeBrowserPush(toast: ToastInput) {
     if (permission !== "granted") return;
     new Notification(toast.title, {
       body: toast.description,
-      icon: "/brand/terafis-icon.png",
+      icon: "/brand/terafis-icon-v2.png",
       tag: `terafis-${toast.kind}`,
     });
   } catch {

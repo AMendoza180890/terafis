@@ -104,7 +104,7 @@ export function AppShell({
             >
               <MenuIcon open={showLabels} />
             </button>
-            <TerafisLogo href="/app" height={34} />
+            <TerafisLogo href="/app" height={40} priority />
           </div>
 
           <div className="flex items-center gap-1 sm:gap-2">
