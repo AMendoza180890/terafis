@@ -3,6 +3,7 @@
 import { usePathname, useRouter } from "next/navigation";
 import { useState, type ReactNode } from "react";
 
+import { AppFooter } from "@/components/app/AppFooter";
 import { UserMenu, type UserMenuProfile } from "@/components/app/UserMenu";
 import { TerafisLogo } from "@/components/brand/TerafisLogo";
 import {
@@ -145,10 +146,12 @@ export function AppShell({
           </nav>
         </aside>
 
-        <div className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 pb-24 sm:px-6 sm:py-8 md:pb-8 print:max-w-none print:px-0 print:py-0 print:pb-0">
+        <div className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6 sm:py-8 print:max-w-none print:px-0 print:py-0">
           {children}
         </div>
       </div>
+
+      <AppFooter className="mt-auto mb-[4.5rem] md:mb-0" />
 
       {/* Móvil: menú inferior con toggle */}
       {mobileMenuOpen ? (

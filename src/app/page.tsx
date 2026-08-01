@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { AppFooter } from "@/components/app/AppFooter";
 import { TerafisLogo } from "@/components/brand/TerafisLogo";
 
 export default function HomePage() {
@@ -14,7 +15,7 @@ export default function HomePage() {
         </Link>
       </header>
 
-      <section className="mx-auto flex w-full max-w-5xl flex-1 flex-col justify-center px-4 pb-24 sm:px-6">
+      <section className="mx-auto flex w-full max-w-5xl flex-1 flex-col justify-center px-4 pb-16 sm:px-6">
         <TerafisLogo href="/" height={140} priority />
         <h1 className="text-foreground mt-10 max-w-2xl font-serif text-4xl leading-tight md:text-5xl">
           Gestión clínica con seguridad desde el día uno
@@ -32,6 +33,8 @@ export default function HomePage() {
           </Link>
         </div>
       </section>
+
+      <AppFooter />
     </main>
   );
 }
