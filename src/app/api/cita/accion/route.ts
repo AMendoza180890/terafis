@@ -4,6 +4,7 @@ import { z } from "zod";
 import { hashToken } from "@/lib/auth/tokens";
 import { genericTokenErrorMessage } from "@/lib/appointments/tokens";
 import { rateLimit } from "@/lib/security/rate-limit";
+import { verifyTurnstile } from "@/lib/security/turnstile";
 import { createClient } from "@supabase/supabase-js";
 
 const BodySchema = z.object({
@@ -52,8 +53,14 @@ export async function POST(request: Request) {
     );
   }
 
-  // Turnstile opcional si está configurado
-  if (process.env.TURNSTILE_SECRET_KEY && parsed.data.turnstileToken) {
+  // Fail-closed: si Turnstile está configurado, el token es obligatorio.
+  if (process.env.TURNSTILE_SECRET_KEY) {
+    if (!parsed.data.turnstileToken) {
+      return NextResponse.json(
+        { ok: false, error: genericTokenErrorMessage() },
+        { status: 400 },
+      );
+    }
     const ok = await verifyTurnstile(parsed.data.turnstileToken, ip);
     if (!ok) {
       return NextResponse.json(
@@ -104,21 +111,4 @@ export async function GET() {
     { ok: false, error: "Use POST desde la página de confirmación." },
     { status: 405 },
   );
-}
-
-async function verifyTurnstile(token: string, ip: string): Promise<boolean> {
-  const secret = process.env.TURNSTILE_SECRET_KEY;
-  if (!secret) return true;
-  const body = new URLSearchParams({
-    secret,
-    response: token,
-    remoteip: ip,
-  });
-  const res = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
-    method: "POST",
-    body,
-  });
-  if (!res.ok) return false;
-  const data = (await res.json()) as { success?: boolean };
-  return Boolean(data.success);
 }

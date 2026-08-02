@@ -5,6 +5,7 @@ import { CitaActionForm } from "@/components/cita/CitaActionForm";
 import { hashToken } from "@/lib/auth/tokens";
 import { buildAddToGoogleCalendarUrl } from "@/lib/calendar/patient-link";
 import { formatInClinicTz, DEFAULT_TZ } from "@/lib/datetime/clinic-tz";
+import { getPublicEnv } from "@/lib/env";
 
 type Props = {
   params: Promise<{ accion: string; token: string }>;
@@ -38,6 +39,7 @@ export default async function CitaTokenPage({ params }: Props) {
     inicio?: string;
     fin?: string;
     clinic_nombre?: string;
+    clinic_timezone?: string;
     tipo_servicio?: string | null;
   } | null;
 
@@ -52,8 +54,9 @@ export default async function CitaTokenPage({ params }: Props) {
     );
   }
 
+  const timezone = peek.clinic_timezone || DEFAULT_TZ;
   const inicioLabel = peek.inicio
-    ? formatInClinicTz(peek.inicio, DEFAULT_TZ, "dd/MM/yyyy HH:mm")
+    ? formatInClinicTz(peek.inicio, timezone, "dd/MM/yyyy HH:mm")
     : "";
 
   const calendarUrl =
@@ -86,6 +89,7 @@ export default async function CitaTokenPage({ params }: Props) {
         <CitaActionForm
           accion={accion as "confirmar" | "cancelar" | "reagendar"}
           token={token}
+          turnstileSiteKey={getPublicEnv().turnstileSiteKey}
         />
       </div>
 

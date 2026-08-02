@@ -1,6 +1,9 @@
+import Script from "next/script";
+
 import { AppFooter } from "@/components/app/AppFooter";
 import { TerafisLogo } from "@/components/brand/TerafisLogo";
 import { ActionButton } from "@/components/ui/ActionButton";
+import { getPublicEnv } from "@/lib/env";
 
 export const metadata = {
   title: "Iniciar sesión",
@@ -9,10 +12,11 @@ export const metadata = {
 const ERROR_MESSAGES: Record<string, string> = {
   auth: "No se pudo iniciar sesión. Verifique correo y contraseña.",
   credenciales: "Correo o contraseña incorrectos.",
-  config:
-    "Falta configuración de Supabase en el entorno local (.env.local).",
+  config: "Falta configuración de Supabase en el entorno local (.env.local).",
   servicio:
     "Supabase no responde ahora (timeout/522). Espere un momento e intente de nuevo, o revise el estado del proyecto en el dashboard.",
+  rate_limit: "Demasiados intentos. Espere un momento e intente de nuevo.",
+  captcha: "No se pudo verificar que es una persona. Intente de nuevo.",
 };
 
 type LoginPageProps = {
@@ -23,6 +27,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = (await searchParams) ?? {};
   const errorCode = params.error ?? "";
   const errorMessage = ERROR_MESSAGES[errorCode];
+  const { turnstileSiteKey } = getPublicEnv();
 
   return (
     <main className="flex flex-1 flex-col">
@@ -31,9 +36,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           <div className="flex justify-center">
             <TerafisLogo href="/" height={72} priority />
           </div>
-          <h1 className="text-foreground mt-6 text-xl font-semibold">
-            Iniciar sesión
-          </h1>
+          <h1 className="text-foreground mt-6 text-xl font-semibold">Iniciar sesión</h1>
           <p className="text-muted mt-2 text-sm">
             Ingrese con su cuenta de personal de la clínica.
           </p>
@@ -69,6 +72,9 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                 className="border-brand/20 bg-background ring-brand w-full rounded-md border px-3 py-2 outline-none focus:ring-2"
               />
             </label>
+            {turnstileSiteKey ? (
+              <div className="cf-turnstile" data-sitekey={turnstileSiteKey} />
+            ) : null}
             <button
               type="submit"
               className="bg-brand w-full rounded-md px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90"
@@ -76,6 +82,15 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
               Entrar
             </button>
           </form>
+
+          {turnstileSiteKey ? (
+            <Script
+              src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+              strategy="afterInteractive"
+              async
+              defer
+            />
+          ) : null}
 
           <div className="mt-6 flex justify-center">
             <ActionButton href="/" variant="ghost" inline>

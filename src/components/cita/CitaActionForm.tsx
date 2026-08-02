@@ -1,19 +1,46 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import Script from "next/script";
+import { useEffect, useRef, useState, useTransition } from "react";
 
 import { AutoTextarea } from "@/components/ui/AutoTextarea";
 
 type Props = {
   accion: "confirmar" | "cancelar" | "reagendar";
   token: string;
+  turnstileSiteKey?: string;
 };
 
-export function CitaActionForm({ accion, token }: Props) {
+declare global {
+  interface Window {
+    turnstile?: {
+      render: (
+        container: HTMLElement,
+        options: { sitekey: string; callback: (token: string) => void },
+      ) => string;
+    };
+  }
+}
+
+export function CitaActionForm({ accion, token, turnstileSiteKey }: Props) {
   const [pending, startTransition] = useTransition();
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [motivo, setMotivo] = useState("");
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [turnstileScriptReady, setTurnstileScriptReady] = useState(false);
+  const widgetRef = useRef<HTMLDivElement>(null);
+  const widgetRendered = useRef(false);
+
+  useEffect(() => {
+    if (!turnstileSiteKey || !turnstileScriptReady || widgetRendered.current) return;
+    if (!widgetRef.current || !window.turnstile) return;
+    widgetRendered.current = true;
+    window.turnstile.render(widgetRef.current, {
+      sitekey: turnstileSiteKey,
+      callback: (t: string) => setTurnstileToken(t),
+    });
+  }, [turnstileSiteKey, turnstileScriptReady]);
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -26,6 +53,7 @@ export function CitaActionForm({ accion, token }: Props) {
           token,
           accion,
           motivo: accion === "cancelar" ? motivo : undefined,
+          turnstileToken: turnstileToken ?? undefined,
         }),
       });
       const json = (await res.json()) as { ok?: boolean; error?: string };
@@ -72,9 +100,22 @@ export function CitaActionForm({ accion, token }: Props) {
         </p>
       ) : null}
 
+      {turnstileSiteKey ? (
+        <>
+          <div ref={widgetRef} />
+          <Script
+            src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+            strategy="afterInteractive"
+            async
+            defer
+            onReady={() => setTurnstileScriptReady(true)}
+          />
+        </>
+      ) : null}
+
       <button
         type="submit"
-        disabled={pending}
+        disabled={pending || (Boolean(turnstileSiteKey) && !turnstileToken)}
         className={
           accion === "cancelar"
             ? "w-full rounded-md bg-red-700 px-4 py-3 text-sm font-semibold text-white disabled:opacity-60"
