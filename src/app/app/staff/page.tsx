@@ -1,6 +1,7 @@
 import { StaffForms } from "@/components/staff/StaffForms";
 import { StaffMembersTable } from "@/components/staff/StaffMembersTable";
 import { getCurrentStaff } from "@/lib/auth/current-staff";
+import { requireMenuAccess } from "@/lib/permissions/require";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = { title: "Staff — Terafis" };
@@ -9,6 +10,7 @@ const DIAS = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
 
 export default async function StaffPage() {
   const me = await getCurrentStaff();
+  await requireMenuAccess(me, "staff");
   let members: Array<{
     id: string;
     nombre: string;

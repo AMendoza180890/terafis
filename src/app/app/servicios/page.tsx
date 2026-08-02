@@ -1,11 +1,13 @@
 import { ServicesManager } from "@/components/services/ServicesManager";
 import { getCurrentStaff } from "@/lib/auth/current-staff";
+import { requireMenuAccess } from "@/lib/permissions/require";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = { title: "Servicios — Terafis" };
 
 export default async function ServiciosPage() {
   const staff = await getCurrentStaff();
+  await requireMenuAccess(staff, "servicios");
   let services: Array<{
     id: string;
     tipo: string;
@@ -50,9 +52,7 @@ export default async function ServiciosPage() {
       </div>
       <ServicesManager
         services={services}
-        canManage={
-          staff?.rol === "admin" || staff?.rol === "recepcionista"
-        }
+        canManage={staff?.rol === "admin" || staff?.rol === "recepcionista"}
       />
     </main>
   );

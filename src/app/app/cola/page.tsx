@@ -6,6 +6,7 @@ import { fromCents } from "@/lib/money/cents";
 import { sumLineItemsCents } from "@/lib/money/totals";
 import type { QueueStatus } from "@/lib/queue/schemas";
 import type { QueueItemView } from "@/lib/queue/types";
+import { requireMenuAccess } from "@/lib/permissions/require";
 import { RoleCapabilities } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/server";
 
@@ -15,6 +16,7 @@ type Props = { searchParams: Promise<{ patientId?: string }> };
 
 export default async function ColaPage({ searchParams }: Props) {
   const staff = await getCurrentStaff();
+  await requireMenuAccess(staff, "cola");
   const { patientId: preselectId } = await searchParams;
   let items: QueueItemView[] = [];
   let services: Array<{ id: string; titulo: string; costo: string }> = [];
@@ -23,8 +25,7 @@ export default async function ColaPage({ searchParams }: Props) {
   let fecha = clinicTodayIso(DEFAULT_TZ);
   let fixedPatient: { id: string; nombre: string } | null = null;
 
-  const canManage =
-    !!staff && RoleCapabilities[staff.rol].asignarCitasYCola;
+  const canManage = !!staff && RoleCapabilities[staff.rol].asignarCitasYCola;
 
   if (staff) {
     const supabase = await createClient();
@@ -35,8 +36,7 @@ export default async function ColaPage({ searchParams }: Props) {
       .eq("clinic_id", staff.clinicId)
       .maybeSingle();
 
-    timezone =
-      (config as { timezone?: string } | null)?.timezone ?? DEFAULT_TZ;
+    timezone = (config as { timezone?: string } | null)?.timezone ?? DEFAULT_TZ;
     fecha = clinicTodayIso(timezone);
 
     const [
@@ -58,10 +58,7 @@ export default async function ColaPage({ searchParams }: Props) {
         .select("id, titulo, costo")
         .eq("activo", true)
         .order("titulo"),
-      supabase
-        .from("patients")
-        .select("id, nombre, telefono")
-        .is("deleted_at", null),
+      supabase.from("patients").select("id, nombre, telefono").is("deleted_at", null),
       supabase.from("staff").select("id, nombre"),
       supabase
         .from("staff")
@@ -73,9 +70,9 @@ export default async function ColaPage({ searchParams }: Props) {
     ]);
 
     const patientMap = new Map(
-      (
-        (pats ?? []) as Array<{ id: string; nombre: string; telefono: string }>
-      ).map((p) => [p.id, { nombre: p.nombre, telefono: p.telefono }]),
+      ((pats ?? []) as Array<{ id: string; nombre: string; telefono: string }>).map(
+        (p) => [p.id, { nombre: p.nombre, telefono: p.telefono }],
+      ),
     );
     const therapistMap = new Map(
       ((ther ?? []) as Array<{ id: string; nombre: string }>).map((t) => [
@@ -83,9 +80,10 @@ export default async function ColaPage({ searchParams }: Props) {
         t.nombre,
       ]),
     );
-    therapists = ((therOpts ?? []) as Array<{ id: string; nombre: string }>).map(
-      (t) => ({ id: t.id, label: t.nombre }),
-    );
+    therapists = ((therOpts ?? []) as Array<{ id: string; nombre: string }>).map((t) => ({
+      id: t.id,
+      label: t.nombre,
+    }));
 
     if (preselectId && patientMap.has(preselectId)) {
       fixedPatient = {
@@ -120,9 +118,7 @@ export default async function ColaPage({ searchParams }: Props) {
     }>;
 
     const detailApptIds = rows
-      .filter((r) =>
-        ["en_consulta", "pendiente_pago", "completado"].includes(r.estado),
-      )
+      .filter((r) => ["en_consulta", "pendiente_pago", "completado"].includes(r.estado))
       .map((r) => r.appointment_id);
 
     const allApptIds = [...new Set(rows.map((r) => r.appointment_id))];
@@ -166,9 +162,7 @@ export default async function ColaPage({ searchParams }: Props) {
           });
           grouped.set(line.appointment_id, arr);
         }
-        const svc = Array.isArray(line.services)
-          ? line.services[0]
-          : line.services;
+        const svc = Array.isArray(line.services) ? line.services[0] : line.services;
         if (svc?.titulo) {
           const list = servicesByAppt.get(line.appointment_id) ?? [];
           list.push(svc.titulo);
@@ -202,9 +196,7 @@ export default async function ColaPage({ searchParams }: Props) {
         version: r.version,
         notasRecepcion: r.notas_recepcion,
         totalPendiente:
-          r.estado === "pendiente_pago"
-            ? (totals.get(r.appointment_id) ?? null)
-            : null,
+          r.estado === "pendiente_pago" ? (totals.get(r.appointment_id) ?? null) : null,
         serviciosResumen: servicesByAppt.get(r.appointment_id) ?? [],
       };
     });
@@ -239,9 +231,7 @@ export default async function ColaPage({ searchParams }: Props) {
         canManage={canManage}
         canCharge={canManage}
         canAttend={staff?.rol === "terapeuta"}
-        canFinalize={
-          staff?.rol === "admin" || staff?.rol === "terapeuta"
-        }
+        canFinalize={staff?.rol === "admin" || staff?.rol === "terapeuta"}
         canSync={canManage}
         currentStaffId={staff?.id ?? null}
       />

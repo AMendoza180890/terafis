@@ -6,13 +6,10 @@ import { NextAppointmentPanel } from "@/components/patients/NextAppointmentPanel
 import { AddToAttendPanel } from "@/components/queue/AddToAttendPanel";
 import { ActionButton } from "@/components/ui/ActionButton";
 import { getCurrentStaff } from "@/lib/auth/current-staff";
-import {
-  clinicTodayIso,
-  formatInClinicTz,
-  DEFAULT_TZ,
-} from "@/lib/datetime/clinic-tz";
+import { clinicTodayIso, formatInClinicTz, DEFAULT_TZ } from "@/lib/datetime/clinic-tz";
 import type { ClinicalEpisodeSummary } from "@/lib/patients/actions";
 import { loadClinicalEpisodes } from "@/lib/patients/clinical-episodes";
+import { requireMenuAccess } from "@/lib/permissions/require";
 import { RoleCapabilities } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/server";
 
@@ -21,16 +18,14 @@ type Props = {
   searchParams: Promise<{ clinicalId?: string }>;
 };
 
-export default async function PacienteDetailPage({
-  params,
-  searchParams,
-}: Props) {
+export default async function PacienteDetailPage({ params, searchParams }: Props) {
   const { id } = await params;
   const { clinicalId: clinicalIdParam } = await searchParams;
   const staff = await getCurrentStaff();
   if (!staff) {
     return <p className="text-muted">Inicie sesión para ver la ficha del paciente.</p>;
   }
+  await requireMenuAccess(staff, "pacientes");
 
   const supabase = await createClient();
   const { data: patient } = await supabase
@@ -59,8 +54,7 @@ export default async function PacienteDetailPage({
     created_at: string;
   };
 
-  const canFinalizeConsultation =
-    staff.rol === "terapeuta" || staff.rol === "admin";
+  const canFinalizeConsultation = staff.rol === "terapeuta" || staff.rol === "admin";
   const canStartConsultation = staff.rol === "terapeuta";
 
   const { data: config } = await supabase
@@ -123,10 +117,8 @@ export default async function PacienteDetailPage({
 
   const canClinical = RoleCapabilities[staff.rol].verExpedienteClinico;
   const canWriteClinical = canClinical;
-  const canWriteSessionNotes =
-    staff.rol === "admin" || staff.rol === "terapeuta";
-  const canManageEpisodes =
-    canWriteSessionNotes && clinicalLoad.multiExpediente;
+  const canWriteSessionNotes = staff.rol === "admin" || staff.rol === "terapeuta";
+  const canManageEpisodes = canWriteSessionNotes && clinicalLoad.multiExpediente;
 
   const queueRow = activeQueue as {
     id: string;
@@ -137,8 +129,7 @@ export default async function PacienteDetailPage({
   } | null;
 
   const activeConsultation =
-    queueRow &&
-    (staff.rol === "admin" || queueRow.terapeuta_id === staff.id)
+    queueRow && (staff.rol === "admin" || queueRow.terapeuta_id === staff.id)
       ? {
           queueId: queueRow.id,
           appointmentId: queueRow.appointment_id,
@@ -189,8 +180,7 @@ export default async function PacienteDetailPage({
   const referido = doctorRows.find((d) => d.id === p.referido_doctor_id);
 
   const clinicalEpisodes = clinicalLoad.episodes;
-  const canScheduleNext =
-    staff.rol === "admin" || staff.rol === "terapeuta";
+  const canScheduleNext = staff.rol === "admin" || staff.rol === "terapeuta";
   const canEditContact = staff.rol === "admin" || staff.rol === "recepcionista";
   const canAddToAttend = RoleCapabilities[staff.rol].asignarCitasYCola;
 
@@ -213,9 +203,7 @@ export default async function PacienteDetailPage({
       <section className="mt-8">
         <div className="border-brand/15 bg-surface rounded-xl border p-5">
           <h2 className="font-semibold">Contacto</h2>
-          <p className="text-muted mt-1 text-xs">
-            Información registrada por recepción.
-          </p>
+          <p className="text-muted mt-1 text-xs">Información registrada por recepción.</p>
           <dl className="mt-3 space-y-2 text-sm">
             <Row label="Teléfono" value={p.telefono} />
             <Row label="Correo" value={p.email ?? "—"} />
@@ -304,13 +292,13 @@ export default async function PacienteDetailPage({
           <NextAppointmentPanel
             patientId={p.id}
             patientNombre={p.nombre}
-            therapists={(
-              (therapists ?? []) as Array<{ id: string; nombre: string }>
-            ).map((t) => ({ id: t.id, label: t.nombre }))}
+            therapists={((therapists ?? []) as Array<{ id: string; nombre: string }>).map(
+              (t) => ({ id: t.id, label: t.nombre }),
+            )}
             defaultTerapeutaId={
               staff.rol === "terapeuta"
                 ? staff.id
-                : ((therapists ?? []) as Array<{ id: string }>)[0]?.id ?? staff.id
+                : (((therapists ?? []) as Array<{ id: string }>)[0]?.id ?? staff.id)
             }
             lockTherapist={staff.rol === "terapeuta"}
             timezone={tz}
@@ -322,9 +310,9 @@ export default async function PacienteDetailPage({
         <section className="mt-8">
           <AddToAttendPanel
             fixedPatient={{ id: p.id, nombre: p.nombre }}
-            therapists={(
-              (therapists ?? []) as Array<{ id: string; nombre: string }>
-            ).map((t) => ({ id: t.id, label: t.nombre }))}
+            therapists={((therapists ?? []) as Array<{ id: string; nombre: string }>).map(
+              (t) => ({ id: t.id, label: t.nombre }),
+            )}
             timezone={tz}
           />
         </section>

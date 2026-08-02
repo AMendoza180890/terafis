@@ -6,6 +6,7 @@ import { StatusButtons } from "@/components/appointments/StatusButtons";
 import type { AppointmentStatus } from "@/lib/appointments/schemas";
 import { getCurrentStaff } from "@/lib/auth/current-staff";
 import { DEFAULT_TZ, formatInClinicTz } from "@/lib/datetime/clinic-tz";
+import { requireMenuAccess } from "@/lib/permissions/require";
 import { RoleCapabilities } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/server";
 
@@ -23,8 +24,8 @@ type ApptRow = {
 
 export default async function AgendaPage() {
   const staff = await getCurrentStaff();
-  const canAssign =
-    !!staff && RoleCapabilities[staff.rol].asignarCitasYCola;
+  await requireMenuAccess(staff, "agenda");
+  const canAssign = !!staff && RoleCapabilities[staff.rol].asignarCitasYCola;
   let timezone = DEFAULT_TZ;
   let patients: { id: string; label: string }[] = [];
   let therapists: { id: string; label: string }[] = [];
@@ -105,13 +106,7 @@ export default async function AgendaPage() {
         </p>
       </div>
 
-      <div
-        className={
-          canAssign
-            ? "grid gap-8 lg:grid-cols-[1fr_340px]"
-            : "grid gap-8"
-        }
-      >
+      <div className={canAssign ? "grid gap-8 lg:grid-cols-[1fr_340px]" : "grid gap-8"}>
         <AgendaCalendar events={events} timezone={timezone} />
         {canAssign ? (
           <div className="border-brand/15 bg-surface rounded-xl border p-5">

@@ -2,6 +2,7 @@ import { ActionButton } from "@/components/ui/ActionButton";
 import { PatientsSearchList } from "@/components/patients/PatientsSearchList";
 import { getCurrentStaff } from "@/lib/auth/current-staff";
 import { loadPatientsClinicalStats } from "@/lib/patients/clinical-episodes";
+import { requireMenuAccess } from "@/lib/permissions/require";
 import { RoleCapabilities } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/server";
 
@@ -17,6 +18,7 @@ type PatientRow = {
 
 export default async function PacientesPage() {
   const staff = await getCurrentStaff();
+  await requireMenuAccess(staff, "pacientes");
   let patients: PatientRow[] = [];
   let loadError: string | null = null;
   let stats = new Map<
@@ -36,10 +38,7 @@ export default async function PacientesPage() {
     if (error) loadError = error.message;
     else {
       patients = (data ?? []) as PatientRow[];
-      if (
-        RoleCapabilities[staff.rol].verExpedienteClinico &&
-        patients.length > 0
-      ) {
+      if (RoleCapabilities[staff.rol].verExpedienteClinico && patients.length > 0) {
         stats = await loadPatientsClinicalStats(
           supabase,
           patients.map((p) => p.id),
@@ -48,8 +47,7 @@ export default async function PacientesPage() {
     }
   }
 
-  const canAddToAttend =
-    staff?.rol === "admin" || staff?.rol === "recepcionista";
+  const canAddToAttend = staff?.rol === "admin" || staff?.rol === "recepcionista";
   const canViewClinical = staff
     ? RoleCapabilities[staff.rol].verExpedienteClinico
     : false;

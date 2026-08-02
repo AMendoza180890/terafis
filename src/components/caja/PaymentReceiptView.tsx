@@ -17,7 +17,7 @@ export function PaymentReceiptView({ receipt }: { receipt: PaymentReceipt }) {
 
   return (
     <div className="space-y-4">
-      <div className="print:hidden flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
         <div>
           <Link
             href="/app/caja"
@@ -25,9 +25,7 @@ export function PaymentReceiptView({ receipt }: { receipt: PaymentReceipt }) {
           >
             ← Volver a caja
           </Link>
-          <h1 className="font-serif mt-1 text-2xl sm:text-3xl">
-            Factura / comprobante
-          </h1>
+          <h1 className="mt-1 font-serif text-2xl sm:text-3xl">Factura / comprobante</h1>
           <p className="text-muted text-sm">
             Revise la información y envíe a la impresora del cliente.
           </p>
@@ -55,7 +53,7 @@ export function PaymentReceiptView({ receipt }: { receipt: PaymentReceipt }) {
           {receipt.clinicTelefono ? (
             <p className="text-muted text-xs">Tel. {receipt.clinicTelefono}</p>
           ) : null}
-          <p className="pt-2 text-xs font-medium uppercase tracking-wide">
+          <p className="pt-2 text-xs font-medium tracking-wide uppercase">
             Comprobante de atención
           </p>
           <p className="text-muted text-xs">N.º {shortId}</p>
@@ -98,9 +96,7 @@ export function PaymentReceiptView({ receipt }: { receipt: PaymentReceipt }) {
                 {receipt.lines.map((l, i) => (
                   <tr key={i} className="border-brand/5 border-b">
                     <td className="py-2 pr-2">{l.titulo}</td>
-                    <td className="py-2 pr-2 text-right tabular-nums">
-                      {l.cantidad}
-                    </td>
+                    <td className="py-2 pr-2 text-right tabular-nums">{l.cantidad}</td>
                     <td className="py-2 pr-2 text-right tabular-nums">
                       {formatCordobas(l.costoUnitario)}
                     </td>
@@ -113,9 +109,7 @@ export function PaymentReceiptView({ receipt }: { receipt: PaymentReceipt }) {
             </table>
           )}
           <div className="mt-3 space-y-1 text-right">
-            <p className="text-lg font-semibold">
-              Total {formatCordobas(receipt.monto)}
-            </p>
+            <p className="text-lg font-semibold">Total {formatCordobas(receipt.monto)}</p>
             {receipt.montoRecibido ? (
               <p className="text-muted text-xs">
                 Recibido: {formatCordobas(receipt.montoRecibido)}
@@ -126,80 +120,6 @@ export function PaymentReceiptView({ receipt }: { receipt: PaymentReceipt }) {
             ) : null}
           </div>
         </section>
-
-        {receipt.sessionNote ? (
-          <section className="border-brand/10 space-y-2 border-t pt-4">
-            <h2 className="text-base font-semibold">
-              Seguimiento de la consulta
-            </h2>
-            <NoteBlock
-              label="Evolución"
-              value={receipt.sessionNote.notasEvolucion}
-            />
-            <NoteBlock
-              label="Tratamiento"
-              value={receipt.sessionNote.tratamiento}
-            />
-            <NoteBlock
-              label="Observaciones"
-              value={receipt.sessionNote.observaciones}
-            />
-            <NoteBlock
-              label="Rango de movimiento"
-              value={receipt.sessionNote.rangoMovimiento}
-            />
-            {receipt.sessionNote.dolorEva != null ? (
-              <p>
-                <span className="text-muted">Dolor EVA: </span>
-                {receipt.sessionNote.dolorEva}/10
-              </p>
-            ) : null}
-          </section>
-        ) : (
-          <section className="border-brand/10 border-t pt-4">
-            <h2 className="text-base font-semibold">
-              Seguimiento de la consulta
-            </h2>
-            <p className="text-muted mt-1">
-              No hay seguimiento vinculado a esta atención.
-            </p>
-          </section>
-        )}
-
-        {receipt.treatmentPlan ? (
-          <section className="border-brand/10 space-y-2 border-t pt-4">
-            <h2 className="text-base font-semibold">
-              Plan de tratamiento de la atención (v
-              {receipt.treatmentPlan.version})
-            </h2>
-            <NoteBlock
-              label="Diagnóstico"
-              value={receipt.treatmentPlan.diagnostico}
-            />
-            <NoteBlock
-              label="Objetivo"
-              value={receipt.treatmentPlan.objetivo}
-            />
-            <p>
-              <span className="text-muted">Frecuencia: </span>
-              {receipt.treatmentPlan.frecuencia}
-              {receipt.treatmentPlan.duracionEstimadaSemanas != null
-                ? ` · ${receipt.treatmentPlan.duracionEstimadaSemanas} semanas`
-                : ""}
-            </p>
-            <NoteBlock
-              label="Ejercicio, series y repeticiones"
-              value={receipt.treatmentPlan.ejerciciosDetalle}
-            />
-          </section>
-        ) : (
-          <section className="border-brand/10 border-t pt-4">
-            <h2 className="text-base font-semibold">Plan de tratamiento</h2>
-            <p className="text-muted mt-1">
-              No hay plan de tratamiento activo para este paciente.
-            </p>
-          </section>
-        )}
 
         <footer className="border-brand/10 text-muted border-t pt-4 text-center text-xs">
           <p>Gracias por su preferencia. Conserve este comprobante.</p>
@@ -218,21 +138,5 @@ function Field({ label, value }: { label: string; value: string }) {
       <span className="text-muted block text-xs">{label}</span>
       <span className="font-medium">{value}</span>
     </p>
-  );
-}
-
-function NoteBlock({
-  label,
-  value,
-}: {
-  label: string;
-  value: string | null | undefined;
-}) {
-  if (!value?.trim()) return null;
-  return (
-    <div>
-      <p className="text-muted text-xs">{label}</p>
-      <p className="mt-0.5 whitespace-pre-wrap">{value}</p>
-    </div>
   );
 }

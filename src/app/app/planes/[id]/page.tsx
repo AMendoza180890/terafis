@@ -4,6 +4,7 @@ import { NewVersionForm } from "@/components/plans/NewVersionForm";
 import { ActionButton } from "@/components/ui/ActionButton";
 import { getCurrentStaff } from "@/lib/auth/current-staff";
 import { decryptField } from "@/lib/crypto/aes-gcm";
+import { requireMenuAccess } from "@/lib/permissions/require";
 import { createClient } from "@/lib/supabase/server";
 import { exercisesToDetalle } from "@/lib/treatment-plans/schemas";
 
@@ -15,6 +16,7 @@ export default async function PlanDetailPage({ params }: Props) {
   if (!staff || staff.rol === "recepcionista") {
     return <p className="text-muted">Sin acceso al contenido clínico del plan.</p>;
   }
+  await requireMenuAccess(staff, "planes");
 
   const supabase = await createClient();
   const { data: plan } = await supabase
@@ -37,9 +39,7 @@ export default async function PlanDetailPage({ params }: Props) {
     versionIds.length > 0
       ? await supabase
           .from("treatment_exercises")
-          .select(
-            "plan_version_id, nombre, descripcion, series, repeticiones, orden",
-          )
+          .select("plan_version_id, nombre, descripcion, series, repeticiones, orden")
           .in("plan_version_id", versionIds)
           .order("orden", { ascending: true })
       : { data: [] };
@@ -150,8 +150,7 @@ export default async function PlanDetailPage({ params }: Props) {
                 ? ""
                 : latest.diagnostico,
             objetivo:
-              latest.objetivo === "(cifrado)" ||
-              latest.objetivo === "(no descifrable)"
+              latest.objetivo === "(cifrado)" || latest.objetivo === "(no descifrable)"
                 ? ""
                 : latest.objetivo,
             frecuencia: latest.frecuencia,

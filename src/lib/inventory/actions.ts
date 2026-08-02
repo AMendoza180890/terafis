@@ -9,6 +9,7 @@ import {
   ProductSchema,
   SellProductSchema,
 } from "@/lib/inventory/schemas";
+import { hasMenuAccess } from "@/lib/permissions/require";
 import { createClient } from "@/lib/supabase/server";
 
 export type ActionResult =
@@ -82,21 +83,22 @@ export async function recordMovementAction(raw: unknown): Promise<ActionResult> 
   }
 
   const staff = await requireCurrentStaff();
+  if (!(await hasMenuAccess(staff, "inventario"))) {
+    return { ok: false, error: "Sin permiso para registrar movimientos" };
+  }
+
   const supabase = await createClient();
   const m = parsed.data;
 
-  const cantidad =
-    m.tipo === "ajuste" ? Math.abs(m.signedDelta) : m.cantidad;
-  const signed =
-    m.tipo === "ajuste" ? m.signedDelta : null;
+  const cantidad = m.tipo === "ajuste" ? Math.abs(m.signedDelta) : m.cantidad;
+  const signed = m.tipo === "ajuste" ? m.signedDelta : null;
 
   const { data, error } = await supabase.rpc("record_inventory_movement", {
     p_product_id: m.productId,
     p_tipo: m.tipo,
     p_cantidad: cantidad,
     p_motivo: m.motivo ?? null,
-    p_appointment_id:
-      m.tipo === "consumo_sesion" ? (m.appointmentId ?? null) : null,
+    p_appointment_id: m.tipo === "consumo_sesion" ? (m.appointmentId ?? null) : null,
     p_signed_delta: signed,
   });
 

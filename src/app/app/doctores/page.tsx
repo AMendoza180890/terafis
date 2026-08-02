@@ -1,5 +1,6 @@
 import { DoctorsManager } from "@/components/referring-doctors/DoctorsManager";
 import { getCurrentStaff } from "@/lib/auth/current-staff";
+import { requireMenuAccess } from "@/lib/permissions/require";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = { title: "Doctores referidos — Terafis" };
@@ -10,6 +11,8 @@ export default async function DoctoresPage() {
   if (!staff) {
     return <p className="text-muted">Inicie sesión para gestionar doctores.</p>;
   }
+
+  await requireMenuAccess(staff, "doctores");
 
   if (staff.rol !== "admin" && staff.rol !== "recepcionista") {
     return (
@@ -44,15 +47,17 @@ export default async function DoctoresPage() {
         </p>
       ) : (
         <DoctorsManager
-          doctors={(data ?? []) as Array<{
-            id: string;
-            nombre: string;
-            apellido: string;
-            direccion: string | null;
-            telefono: string | null;
-            especialidad: string | null;
-            activo: boolean;
-          }>}
+          doctors={
+            (data ?? []) as Array<{
+              id: string;
+              nombre: string;
+              apellido: string;
+              direccion: string | null;
+              telefono: string | null;
+              especialidad: string | null;
+              activo: boolean;
+            }>
+          }
         />
       )}
     </main>

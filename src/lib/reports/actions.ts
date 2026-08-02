@@ -4,6 +4,7 @@ import { writeAuditLog } from "@/lib/audit/write";
 import { requireCurrentStaff } from "@/lib/auth/current-staff";
 import { fromCents } from "@/lib/money/cents";
 import { formatMoney } from "@/lib/money/totals";
+import { hasMenuAccess } from "@/lib/permissions/require";
 import {
   absenteeismRate,
   assertAggregatesAreDissociated,
@@ -38,6 +39,9 @@ export async function getReportsSummaryAction(input: {
   if (staff.rol === "terapeuta") {
     return { ok: false, error: "Sin acceso a reportes financieros" };
   }
+  if (!(await hasMenuAccess(staff, "reportes"))) {
+    return { ok: false, error: "Sin acceso a reportes financieros" };
+  }
 
   const from = new Date(input.from);
   const to = new Date(input.to);
@@ -47,28 +51,25 @@ export async function getReportsSummaryAction(input: {
 
   const supabase = await createClient();
 
-  const [
-    { count: nuevos },
-    { data: payments },
-    { data: appointments },
-  ] = await Promise.all([
-    supabase
-      .from("patients")
-      .select("id", { count: "exact", head: true })
-      .gte("created_at", from.toISOString())
-      .lt("created_at", to.toISOString())
-      .is("deleted_at", null),
-    supabase
-      .from("payments")
-      .select("monto, metodo_pago, estado, cajero_id, fecha_pago")
-      .gte("fecha_pago", from.toISOString())
-      .lt("fecha_pago", to.toISOString()),
-    supabase
-      .from("appointments")
-      .select("estado, terapeuta_id, inicio")
-      .gte("inicio", from.toISOString())
-      .lt("inicio", to.toISOString()),
-  ]);
+  const [{ count: nuevos }, { data: payments }, { data: appointments }] =
+    await Promise.all([
+      supabase
+        .from("patients")
+        .select("id", { count: "exact", head: true })
+        .gte("created_at", from.toISOString())
+        .lt("created_at", to.toISOString())
+        .is("deleted_at", null),
+      supabase
+        .from("payments")
+        .select("monto, metodo_pago, estado, cajero_id, fecha_pago")
+        .gte("fecha_pago", from.toISOString())
+        .lt("fecha_pago", to.toISOString()),
+      supabase
+        .from("appointments")
+        .select("estado, terapeuta_id, inicio")
+        .gte("inicio", from.toISOString())
+        .lt("inicio", to.toISOString()),
+    ]);
 
   const payRows = (payments ?? []) as Array<{
     monto: string | number;
@@ -211,7 +212,13 @@ export async function exportSummaryAction(input: {
   to: string;
   format: "csv" | "excel" | "pdf";
 }): Promise<
-  | { ok: true; content: string; filename: string; mime: string; encoding: "utf8" | "base64" }
+  | {
+      ok: true;
+      content: string;
+      filename: string;
+      mime: string;
+      encoding: "utf8" | "base64";
+    }
   | { ok: false; error: string }
 > {
   const summary = await getReportsSummaryAction({
@@ -254,7 +261,10 @@ export async function exportSummaryAction(input: {
   if (input.format === "csv") {
     return {
       ok: true,
-      content: toCsv(headers, rows.map((r) => [...r])),
+      content: toCsv(
+        headers,
+        rows.map((r) => [...r]),
+      ),
       filename: `reporte-${stamp}.csv`,
       mime: "text/csv;charset=utf-8",
       encoding: "utf8",
@@ -264,7 +274,11 @@ export async function exportSummaryAction(input: {
   if (input.format === "excel") {
     return {
       ok: true,
-      content: toExcelXml("Reporte", headers, rows.map((r) => [...r])),
+      content: toExcelXml(
+        "Reporte",
+        headers,
+        rows.map((r) => [...r]),
+      ),
       filename: `reporte-${stamp}.xls`,
       mime: "application/vnd.ms-excel",
       encoding: "utf8",

@@ -3,6 +3,8 @@
 import { z } from "zod";
 
 import { requireCurrentStaff } from "@/lib/auth/current-staff";
+import { clinicDayBoundsUtc, DEFAULT_TZ } from "@/lib/datetime/clinic-tz";
+import { hasMenuAccess } from "@/lib/permissions/require";
 import { RoleCapabilities } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/server";
 
@@ -43,9 +45,7 @@ export type ListAuditResult =
   | { ok: true; rows: AuditLogRow[]; actors: Array<{ id: string; nombre: string }> }
   | { ok: false; error: string };
 
-export async function listAuditLogsAction(
-  raw: unknown,
-): Promise<ListAuditResult> {
+export async function listAuditLogsAction(raw: unknown): Promise<ListAuditResult> {
   const parsed = AuditFilterSchema.safeParse(raw ?? {});
   if (!parsed.success) {
     return { ok: false, error: "Filtros inválidos" };
@@ -55,9 +55,22 @@ export async function listAuditLogsAction(
   if (!RoleCapabilities[staff.rol].verAuditLog) {
     return { ok: false, error: "No tiene permiso para ver la auditoría." };
   }
+  if (!(await hasMenuAccess(staff, "auditoria"))) {
+    return { ok: false, error: "No tiene permiso para ver la auditoría." };
+  }
 
   const supabase = await createClient();
   const f = parsed.data;
+
+  let timezone = DEFAULT_TZ;
+  if (f.desde || f.hasta) {
+    const { data: cfg } = await supabase
+      .from("clinic_config")
+      .select("timezone")
+      .eq("clinic_id", staff.clinicId)
+      .maybeSingle();
+    timezone = (cfg as { timezone?: string } | null)?.timezone ?? DEFAULT_TZ;
+  }
 
   let query = supabase
     .from("audit_log")
@@ -71,8 +84,10 @@ export async function listAuditLogsAction(
   if (f.actorId) query = query.eq("actor_id", f.actorId);
   if (f.accion?.trim()) query = query.ilike("accion", `%${f.accion.trim()}%`);
   if (f.resultado !== "todos") query = query.eq("resultado", f.resultado);
-  if (f.desde) query = query.gte("created_at", `${f.desde}T00:00:00.000Z`);
-  if (f.hasta) query = query.lte("created_at", `${f.hasta}T23:59:59.999Z`);
+  if (f.desde)
+    query = query.gte("created_at", clinicDayBoundsUtc(f.desde, timezone).startIso);
+  if (f.hasta)
+    query = query.lt("created_at", clinicDayBoundsUtc(f.hasta, timezone).endIso);
   if (f.q?.trim()) {
     const term = f.q.trim();
     query = query.or(
@@ -108,13 +123,13 @@ export async function listAuditLogsAction(
     ]),
   );
 
-  const rows: AuditLogRow[] = ((data ?? []) as Array<Omit<AuditLogRow, "actor_nombre">>).map(
-    (row) => ({
-      ...row,
-      resultado: (row.resultado as AuditLogRow["resultado"]) ?? "exito",
-      actor_nombre: row.actor_id ? (nameById.get(row.actor_id) ?? null) : null,
-    }),
-  );
+  const rows: AuditLogRow[] = (
+    (data ?? []) as Array<Omit<AuditLogRow, "actor_nombre">>
+  ).map((row) => ({
+    ...row,
+    resultado: (row.resultado as AuditLogRow["resultado"]) ?? "exito",
+    actor_nombre: row.actor_id ? (nameById.get(row.actor_id) ?? null) : null,
+  }));
 
   return {
     ok: true,

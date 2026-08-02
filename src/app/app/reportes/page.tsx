@@ -1,11 +1,13 @@
 import { ReportsClient } from "@/components/reports/ReportsClient";
 import { getCurrentStaff } from "@/lib/auth/current-staff";
+import { requireMenuAccess } from "@/lib/permissions/require";
 import { canExportPatientData } from "@/lib/reports/export";
 
 export const metadata = { title: "Reportes — Terafis" };
 
 export default async function ReportesPage() {
   const staff = await getCurrentStaff();
+  await requireMenuAccess(staff, "reportes");
 
   if (staff?.rol === "terapeuta") {
     return (

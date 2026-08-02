@@ -1,12 +1,14 @@
 import { PlansManager } from "@/components/plans/PlansManager";
 import { ActionButton } from "@/components/ui/ActionButton";
 import { getCurrentStaff } from "@/lib/auth/current-staff";
+import { requireMenuAccess } from "@/lib/permissions/require";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = { title: "Planes de tratamiento — Terafis" };
 
 export default async function PlanesPage() {
   const staff = await getCurrentStaff();
+  await requireMenuAccess(staff, "planes");
 
   if (staff?.rol === "recepcionista") {
     return (

@@ -1,12 +1,14 @@
 import { ConfigForms } from "@/components/config/ConfigForms";
 import { getCurrentStaff } from "@/lib/auth/current-staff";
 import { DEFAULT_TZ } from "@/lib/datetime/clinic-tz";
+import { requireMenuAccess } from "@/lib/permissions/require";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = { title: "Configuración — Terafis" };
 
 export default async function ConfiguracionPage() {
   const staff = await getCurrentStaff();
+  await requireMenuAccess(staff, "configuracion");
   let clinicNombre = "";
   let timezone = DEFAULT_TZ;
   let direccion = "";
@@ -44,9 +46,7 @@ export default async function ConfiguracionPage() {
     <main className="space-y-8">
       <div>
         <h1 className="font-serif text-3xl">Configuración</h1>
-        <p className="text-muted mt-1 text-sm">
-          Datos de clínica y zona horaria IANA.
-        </p>
+        <p className="text-muted mt-1 text-sm">Datos de clínica y zona horaria IANA.</p>
       </div>
 
       {staff?.rol !== "admin" ? (

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { AuditClient } from "@/components/audit/AuditClient";
 import { listAuditLogsAction } from "@/lib/audit/actions";
 import { getCurrentStaff } from "@/lib/auth/current-staff";
+import { requireMenuAccess } from "@/lib/permissions/require";
 import { RoleCapabilities } from "@/lib/roles";
 
 export const metadata = {
@@ -14,6 +15,7 @@ export default async function AuditoriaPage() {
   if (!staff || !RoleCapabilities[staff.rol].verAuditLog) {
     redirect("/app?error=forbidden");
   }
+  await requireMenuAccess(staff, "auditoria");
 
   const initial = await listAuditLogsAction({ limit: 100, resultado: "todos" });
   if (!initial.ok) {
@@ -34,8 +36,8 @@ export default async function AuditoriaPage() {
       <div>
         <h1 className="font-serif text-3xl">Auditoría</h1>
         <p className="text-muted mt-1 text-sm">
-          Bitácora append-only de acciones del sistema: usuario, acción, fecha y
-          resultado (éxito / error).
+          Bitácora append-only de acciones del sistema: usuario, acción, fecha y resultado
+          (éxito / error).
         </p>
       </div>
       <AuditClient initialRows={initial.rows} actors={initial.actors} />

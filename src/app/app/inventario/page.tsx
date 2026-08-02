@@ -1,11 +1,13 @@
 import { InventoryClient } from "@/components/inventory/InventoryClient";
 import { getCurrentStaff } from "@/lib/auth/current-staff";
+import { requireMenuAccess } from "@/lib/permissions/require";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = { title: "Inventario — Terafis" };
 
 export default async function InventarioPage() {
   const staff = await getCurrentStaff();
+  await requireMenuAccess(staff, "inventario");
   const canManage = staff?.rol === "admin" || staff?.rol === "recepcionista";
 
   let products: Array<{
@@ -77,8 +79,7 @@ export default async function InventarioPage() {
         stock_minimo: p.stock_minimo,
         activo: p.activo,
         existencia: s?.existencia ?? 0,
-        bajo_minimo:
-          s?.bajo_minimo ?? (s?.existencia ?? 0) <= p.stock_minimo,
+        bajo_minimo: s?.bajo_minimo ?? (s?.existencia ?? 0) <= p.stock_minimo,
       };
     });
 
@@ -99,8 +100,8 @@ export default async function InventarioPage() {
     <main>
       <h1 className="font-serif text-3xl">Inventario</h1>
       <p className="text-muted mt-2 text-sm">
-        Órtesis, vendajes, consumibles. Movimientos append-only; alertas al
-        llegar al mínimo.
+        Órtesis, vendajes, consumibles. Movimientos append-only; alertas al llegar al
+        mínimo.
       </p>
       <div className="mt-8">
         <InventoryClient

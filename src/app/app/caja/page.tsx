@@ -8,6 +8,7 @@ import {
   type CajaPaymentRow,
   type CajaServiceLine,
 } from "@/lib/payments/caja-periods";
+import { requireMenuAccess } from "@/lib/permissions/require";
 import { RoleCapabilities } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/server";
 
@@ -24,6 +25,8 @@ export default async function CajaPage() {
     redirect("/app");
   }
 
+  await requireMenuAccess(staff, "caja");
+
   const supabase = await createClient();
   const { data: cfg } = await supabase
     .from("clinic_config")
@@ -31,8 +34,7 @@ export default async function CajaPage() {
     .eq("clinic_id", staff.clinicId)
     .maybeSingle();
 
-  const timezone =
-    (cfg as { timezone?: string } | null)?.timezone ?? DEFAULT_TZ;
+  const timezone = (cfg as { timezone?: string } | null)?.timezone ?? DEFAULT_TZ;
   // Solo año en curso (evita arrastrar meses del año pasado en la UI).
   const fromUtc = clinicYearStartUtc(timezone);
 
@@ -50,10 +52,7 @@ export default async function CajaPage() {
   ]);
 
   const names = new Map(
-    ((pats ?? []) as Array<{ id: string; nombre: string }>).map((p) => [
-      p.id,
-      p.nombre,
-    ]),
+    ((pats ?? []) as Array<{ id: string; nombre: string }>).map((p) => [p.id, p.nombre]),
   );
 
   const rawPayments = (
@@ -86,9 +85,7 @@ export default async function CajaPage() {
       cantidad: number;
       services: { titulo: string } | { titulo: string }[] | null;
     }>) {
-      const svc = Array.isArray(line.services)
-        ? line.services[0]
-        : line.services;
+      const svc = Array.isArray(line.services) ? line.services[0] : line.services;
       const costo = Number(line.costo_aplicado);
       const cantidad = Number(line.cantidad) || 1;
       const entry: CajaServiceLine = {

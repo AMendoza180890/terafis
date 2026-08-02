@@ -1,6 +1,7 @@
 import { PatientForm } from "@/components/patients/PatientForm";
 import { ActionButton } from "@/components/ui/ActionButton";
 import { getCurrentStaff } from "@/lib/auth/current-staff";
+import { requireMenuAccess } from "@/lib/permissions/require";
 import { RoleCapabilities } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/server";
 
@@ -8,11 +9,11 @@ export const metadata = { title: "Nuevo paciente — Terafis" };
 
 export default async function NuevoPacientePage() {
   const staff = await getCurrentStaff();
+  await requireMenuAccess(staff, "pacientes");
   const canEditClinical = staff
     ? RoleCapabilities[staff.rol].verExpedienteClinico
     : false;
-  const showReferral =
-    staff?.rol === "admin" || staff?.rol === "recepcionista";
+  const showReferral = staff?.rol === "admin" || staff?.rol === "recepcionista";
 
   let referringDoctors: Array<{ id: string; label: string }> = [];
   if (showReferral && staff) {
