@@ -94,11 +94,15 @@ export function SessionNotesPanel({
   const [consultation, setConsultation] = useState(activeConsultation);
 
   useEffect(() => {
+    // Sincroniza con el prop cuando cambia la consulta activa en cola.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setConsultation(activeConsultation);
   }, [activeConsultation]);
 
   useEffect(() => {
     if (!savedNoteId && activeConsultation?.appointmentId) {
+      // Precarga la cita de la consulta activa en el formulario nuevo.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setForm((prev) =>
         prev.appointmentId
           ? prev
@@ -271,17 +275,12 @@ export function SessionNotesPanel({
 
   async function persistSeguimiento(appointmentIdOverride?: string) {
     const appointmentId =
-      appointmentIdOverride ||
-      form.appointmentId ||
-      consultation?.appointmentId ||
-      "";
+      appointmentIdOverride || form.appointmentId || consultation?.appointmentId || "";
     const planPayload = {
       diagnostico: planForm.diagnostico,
       objetivo: planForm.objetivo,
       frecuencia: planForm.frecuencia,
-      duracionEstimadaSemanas: planForm.semanas
-        ? Number(planForm.semanas)
-        : undefined,
+      duracionEstimadaSemanas: planForm.semanas ? Number(planForm.semanas) : undefined,
       ejerciciosDetalle: planForm.ejerciciosDetalle,
     };
     const payload = {
@@ -304,247 +303,245 @@ export function SessionNotesPanel({
   return (
     <div className="space-y-6">
       {!readOnly ? (
-      <form
-        className="space-y-3"
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (fieldsLocked) return;
-          const finalizeAfter = canSaveAndFinalize;
-          startTransition(async () => {
-            let consult = consultation;
-            if (finalizeAfter && consult) {
-              consult = await ensureInConsulta(consult);
-              if (!consult) return;
-            }
+        <form
+          className="space-y-3"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (fieldsLocked) return;
+            const finalizeAfter = canSaveAndFinalize;
+            startTransition(async () => {
+              let consult = consultation;
+              if (finalizeAfter && consult) {
+                consult = await ensureInConsulta(consult);
+                if (!consult) return;
+              }
 
-            const apptId =
-              form.appointmentId || consult?.appointmentId || "";
-            if (apptId && apptId !== form.appointmentId) {
-              setForm((prev) => ({ ...prev, appointmentId: apptId }));
-            }
+              const apptId = form.appointmentId || consult?.appointmentId || "";
+              if (apptId && apptId !== form.appointmentId) {
+                setForm((prev) => ({ ...prev, appointmentId: apptId }));
+              }
 
-            const res = await persistSeguimiento(apptId);
-            toast.fromActionResult(
-              res,
-              savedNoteId ? "Seguimiento actualizado" : "Seguimiento guardado",
-            );
-            if (!res.ok) return;
+              const res = await persistSeguimiento(apptId);
+              toast.fromActionResult(
+                res,
+                savedNoteId ? "Seguimiento actualizado" : "Seguimiento guardado",
+              );
+              if (!res.ok) return;
 
-            setSavedNoteId(res.id);
-            setEditing(false);
-            load();
+              setSavedNoteId(res.id);
+              setEditing(false);
+              load();
 
-            if (finalizeAfter && consult?.estado === "en_consulta") {
-              setShowFinalize(true);
-            }
-          });
-        }}
-      >
-        <div className="flex flex-wrap items-start justify-between gap-2">
-          <div>
-            <h3 className="font-semibold">
-              {savedNoteId
-                ? editing
-                  ? "Editar seguimiento"
-                  : "Seguimiento guardado"
-                : "Nuevo seguimiento"}
-            </h3>
-            <p className="text-muted text-xs">
-              {fieldsLocked
-                ? "Puede editar los campos o finalizar la consulta."
-                : isNewNote
-                  ? "Registre la sesión. El plan de tratamiento es opcional."
-                  : "Actualice evolución, tratamiento y observaciones."}
-            </p>
+              if (finalizeAfter && consult?.estado === "en_consulta") {
+                setShowFinalize(true);
+              }
+            });
+          }}
+        >
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <div>
+              <h3 className="font-semibold">
+                {savedNoteId
+                  ? editing
+                    ? "Editar seguimiento"
+                    : "Seguimiento guardado"
+                  : "Nuevo seguimiento"}
+              </h3>
+              <p className="text-muted text-xs">
+                {fieldsLocked
+                  ? "Puede editar los campos o finalizar la consulta."
+                  : isNewNote
+                    ? "Registre la sesión. El plan de tratamiento es opcional."
+                    : "Actualice evolución, tratamiento y observaciones."}
+              </p>
+            </div>
+            {savedNoteId ? (
+              <button
+                type="button"
+                onClick={beginNew}
+                className="text-brand text-sm font-medium underline-offset-2 hover:underline"
+              >
+                Nuevo seguimiento
+              </button>
+            ) : null}
           </div>
-          {savedNoteId ? (
-            <button
-              type="button"
-              onClick={beginNew}
-              className="text-brand text-sm font-medium underline-offset-2 hover:underline"
-            >
-              Nuevo seguimiento
-            </button>
-          ) : null}
-        </div>
 
-        <label className="block text-sm">
-          <span className="text-muted mb-1 block">Atención (cita)</span>
-          <select
-            name="appointmentId"
-            disabled={fieldsLocked}
-            value={form.appointmentId}
-            onChange={(e) => setField("appointmentId", e.target.value)}
-            className="border-brand/20 bg-background w-full rounded-md border px-3 py-2 disabled:opacity-70"
-          >
-            <option value="">Sin cita asociada</option>
-            {appointments.map((a) => (
-              <option key={a.id} value={a.id}>
-                {a.label}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="block text-sm">
-          <span className="text-muted mb-1 block">Seguimiento / evolución</span>
-          <AutoTextarea
-            name="notasEvolucion"
-            minRows={2}
-            disabled={fieldsLocked}
-            value={form.notasEvolucion}
-            onChange={(e) => setField("notasEvolucion", e.target.value)}
-            className="border-brand/20 bg-background w-full rounded-md border px-3 py-2 disabled:opacity-70"
-          />
-        </label>
-
-        <label className="block text-sm">
-          <span className="text-muted mb-1 block">Tratamiento</span>
-          <AutoTextarea
-            name="tratamiento"
-            minRows={2}
-            disabled={fieldsLocked}
-            value={form.tratamiento}
-            onChange={(e) => setField("tratamiento", e.target.value)}
-            className="border-brand/20 bg-background w-full rounded-md border px-3 py-2 disabled:opacity-70"
-          />
-        </label>
-
-        <label className="block text-sm">
-          <span className="text-muted mb-1 block">Observaciones</span>
-          <AutoTextarea
-            name="observaciones"
-            minRows={2}
-            disabled={fieldsLocked}
-            value={form.observaciones}
-            onChange={(e) => setField("observaciones", e.target.value)}
-            className="border-brand/20 bg-background w-full rounded-md border px-3 py-2 disabled:opacity-70"
-          />
-        </label>
-
-        <div className="grid gap-3 sm:grid-cols-2">
           <label className="block text-sm">
-            <span className="text-muted mb-1 block">Dolor EVA (0–10)</span>
-            <input
-              name="dolorEva"
-              type="number"
-              min={0}
-              max={10}
+            <span className="text-muted mb-1 block">Atención (cita)</span>
+            <select
+              name="appointmentId"
               disabled={fieldsLocked}
-              value={form.dolorEva}
-              onChange={(e) => setField("dolorEva", e.target.value)}
+              value={form.appointmentId}
+              onChange={(e) => setField("appointmentId", e.target.value)}
               className="border-brand/20 bg-background w-full rounded-md border px-3 py-2 disabled:opacity-70"
-            />
+            >
+              <option value="">Sin cita asociada</option>
+              {appointments.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.label}
+                </option>
+              ))}
+            </select>
           </label>
+
           <label className="block text-sm">
-            <span className="text-muted mb-1 block">Rango de movimiento</span>
+            <span className="text-muted mb-1 block">Seguimiento / evolución</span>
             <AutoTextarea
-              name="rangoMovimiento"
+              name="notasEvolucion"
               minRows={2}
               disabled={fieldsLocked}
-              value={form.rangoMovimiento}
-              onChange={(e) => setField("rangoMovimiento", e.target.value)}
+              value={form.notasEvolucion}
+              onChange={(e) => setField("notasEvolucion", e.target.value)}
               className="border-brand/20 bg-background w-full rounded-md border px-3 py-2 disabled:opacity-70"
             />
           </label>
-        </div>
 
-        {isNewNote ? (
-          <TreatmentPlanFields
-            value={planForm}
-            onChange={setPlanForm}
-            disabled={fieldsLocked}
-            required={false}
-          />
-        ) : null}
+          <label className="block text-sm">
+            <span className="text-muted mb-1 block">Tratamiento</span>
+            <AutoTextarea
+              name="tratamiento"
+              minRows={2}
+              disabled={fieldsLocked}
+              value={form.tratamiento}
+              onChange={(e) => setField("tratamiento", e.target.value)}
+              className="border-brand/20 bg-background w-full rounded-md border px-3 py-2 disabled:opacity-70"
+            />
+          </label>
 
-        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-          {!fieldsLocked ? (
-            <button
-              type="submit"
-              disabled={pending}
-              className="bg-brand w-full rounded-md px-4 py-2 text-sm font-semibold text-white disabled:opacity-60 sm:w-auto"
-            >
-              {pending
-                ? "Guardando…"
-                : canSaveAndFinalize
-                  ? "Guardar y finalizar consulta"
-                  : savedNoteId
-                    ? "Actualizar seguimiento"
-                    : "Guardar seguimiento"}
-            </button>
+          <label className="block text-sm">
+            <span className="text-muted mb-1 block">Observaciones</span>
+            <AutoTextarea
+              name="observaciones"
+              minRows={2}
+              disabled={fieldsLocked}
+              value={form.observaciones}
+              onChange={(e) => setField("observaciones", e.target.value)}
+              className="border-brand/20 bg-background w-full rounded-md border px-3 py-2 disabled:opacity-70"
+            />
+          </label>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="block text-sm">
+              <span className="text-muted mb-1 block">Dolor EVA (0–10)</span>
+              <input
+                name="dolorEva"
+                type="number"
+                min={0}
+                max={10}
+                disabled={fieldsLocked}
+                value={form.dolorEva}
+                onChange={(e) => setField("dolorEva", e.target.value)}
+                className="border-brand/20 bg-background w-full rounded-md border px-3 py-2 disabled:opacity-70"
+              />
+            </label>
+            <label className="block text-sm">
+              <span className="text-muted mb-1 block">Rango de movimiento</span>
+              <AutoTextarea
+                name="rangoMovimiento"
+                minRows={2}
+                disabled={fieldsLocked}
+                value={form.rangoMovimiento}
+                onChange={(e) => setField("rangoMovimiento", e.target.value)}
+                className="border-brand/20 bg-background w-full rounded-md border px-3 py-2 disabled:opacity-70"
+              />
+            </label>
+          </div>
+
+          {isNewNote ? (
+            <TreatmentPlanFields
+              value={planForm}
+              onChange={setPlanForm}
+              disabled={fieldsLocked}
+              required={false}
+            />
           ) : null}
 
-          {!fieldsLocked && canSaveAndFinalize ? (
-            <button
-              type="button"
-              disabled={pending}
-              onClick={() => {
-                startTransition(async () => {
-                  const res = await persistSeguimiento();
-                  toast.fromActionResult(res, "Seguimiento guardado");
-                  if (res.ok) {
-                    setSavedNoteId(res.id);
-                    setEditing(false);
-                    load();
-                  }
-                });
-              }}
-              className="border-brand/30 text-brand w-full rounded-md border px-4 py-2 text-sm font-semibold disabled:opacity-60 sm:w-auto"
-            >
-              Solo guardar
-            </button>
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+            {!fieldsLocked ? (
+              <button
+                type="submit"
+                disabled={pending}
+                className="bg-brand w-full rounded-md px-4 py-2 text-sm font-semibold text-white disabled:opacity-60 sm:w-auto"
+              >
+                {pending
+                  ? "Guardando…"
+                  : canSaveAndFinalize
+                    ? "Guardar y finalizar consulta"
+                    : savedNoteId
+                      ? "Actualizar seguimiento"
+                      : "Guardar seguimiento"}
+              </button>
+            ) : null}
+
+            {!fieldsLocked && canSaveAndFinalize ? (
+              <button
+                type="button"
+                disabled={pending}
+                onClick={() => {
+                  startTransition(async () => {
+                    const res = await persistSeguimiento();
+                    toast.fromActionResult(res, "Seguimiento guardado");
+                    if (res.ok) {
+                      setSavedNoteId(res.id);
+                      setEditing(false);
+                      load();
+                    }
+                  });
+                }}
+                className="border-brand/30 text-brand w-full rounded-md border px-4 py-2 text-sm font-semibold disabled:opacity-60 sm:w-auto"
+              >
+                Solo guardar
+              </button>
+            ) : null}
+
+            {fieldsLocked ? (
+              <button
+                type="button"
+                disabled={pending}
+                onClick={beginEdit}
+                className="border-brand/30 text-brand w-full rounded-md border px-4 py-2 text-sm font-semibold disabled:opacity-60 sm:w-auto"
+              >
+                Editar
+              </button>
+            ) : null}
+
+            {fieldsLocked && canShowFinalize ? (
+              <button
+                type="button"
+                disabled={pending}
+                onClick={() => setShowFinalize(true)}
+                className="bg-accent w-full rounded-md px-4 py-2 text-sm font-semibold text-white disabled:opacity-60 sm:w-auto"
+              >
+                Finalizar consulta
+              </button>
+            ) : null}
+
+            {canShowStartConsultation && !canSaveAndFinalize ? (
+              <button
+                type="button"
+                disabled={pending}
+                onClick={startConsultation}
+                className="border-brand/30 text-brand w-full rounded-md border px-4 py-2 text-sm font-semibold disabled:opacity-60 sm:w-auto"
+              >
+                Iniciar consulta
+              </button>
+            ) : null}
+          </div>
+
+          {canSaveAndFinalize ? (
+            <p className="text-muted text-xs">
+              “Guardar y finalizar consulta” guarda el seguimiento, inicia la atención si
+              hace falta y abre el envío a cobro para recepción.
+            </p>
           ) : null}
 
-          {fieldsLocked ? (
-            <button
-              type="button"
-              disabled={pending}
-              onClick={beginEdit}
-              className="border-brand/30 text-brand w-full rounded-md border px-4 py-2 text-sm font-semibold disabled:opacity-60 sm:w-auto"
-            >
-              Editar
-            </button>
+          {canFinalizeConsultation && !consultation ? (
+            <p className="text-muted text-xs">
+              No hay turno activo en cola para este paciente hoy. El seguimiento se puede
+              guardar; la finalización estará disponible cuando exista turno.
+            </p>
           ) : null}
-
-          {fieldsLocked && canShowFinalize ? (
-            <button
-              type="button"
-              disabled={pending}
-              onClick={() => setShowFinalize(true)}
-              className="bg-accent w-full rounded-md px-4 py-2 text-sm font-semibold text-white disabled:opacity-60 sm:w-auto"
-            >
-              Finalizar consulta
-            </button>
-          ) : null}
-
-          {canShowStartConsultation && !canSaveAndFinalize ? (
-            <button
-              type="button"
-              disabled={pending}
-              onClick={startConsultation}
-              className="border-brand/30 text-brand w-full rounded-md border px-4 py-2 text-sm font-semibold disabled:opacity-60 sm:w-auto"
-            >
-              Iniciar consulta
-            </button>
-          ) : null}
-        </div>
-
-        {canSaveAndFinalize ? (
-          <p className="text-muted text-xs">
-            “Guardar y finalizar consulta” guarda el seguimiento, inicia la
-            atención si hace falta y abre el envío a cobro para recepción.
-          </p>
-        ) : null}
-
-        {canFinalizeConsultation && !consultation ? (
-          <p className="text-muted text-xs">
-            No hay turno activo en cola para este paciente hoy. El seguimiento
-            se puede guardar; la finalización estará disponible cuando exista
-            turno.
-          </p>
-        ) : null}
-      </form>
+        </form>
       ) : (
         <p className="text-muted text-sm">
           Historial clínico registrado por el fisioterapeuta (solo consulta).
@@ -616,9 +613,7 @@ export function SessionNotesPanel({
                 className="border-brand/15 rounded-md border px-3 py-3 text-sm"
               >
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <p className="font-medium">
-                    {formatInClinicTz(n.createdAt, timezone)}
-                  </p>
+                  <p className="font-medium">{formatInClinicTz(n.createdAt, timezone)}</p>
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="text-muted text-xs">
                       {n.dolorEva != null ? `EVA ${n.dolorEva}/10` : "Sin EVA"}
@@ -678,10 +673,7 @@ export function SessionNotesPanel({
           onDone={() => {
             setShowFinalize(false);
             setConsultation(null);
-            toast.success(
-              "Consulta finalizada",
-              "Enviada a cobro. Volviendo a la cola…",
-            );
+            toast.success("Consulta finalizada", "Enviada a cobro. Volviendo a la cola…");
             router.push("/app/cola");
           }}
         />

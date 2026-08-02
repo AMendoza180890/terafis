@@ -2,10 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 
-import {
-  listAuditLogsAction,
-  type AuditLogRow,
-} from "@/lib/audit/actions";
+import { listAuditLogsAction, type AuditLogRow } from "@/lib/audit/actions";
 import { useToast } from "@/components/notifications/ToastProvider";
 
 type Actor = { id: string; nombre: string };
@@ -49,6 +46,8 @@ export function AuditClient({
   }
 
   useEffect(() => {
+    // Sincroniza con el prop cuando el server component revalida (ej. revalidatePath).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setRows(initialRows);
   }, [initialRows]);
 
@@ -113,9 +112,7 @@ export function AuditClient({
           <span className="text-muted mb-1 block text-xs">Resultado</span>
           <select
             value={resultado}
-            onChange={(e) =>
-              setResultado(e.target.value as typeof resultado)
-            }
+            onChange={(e) => setResultado(e.target.value as typeof resultado)}
             className="border-brand/20 bg-background w-full rounded-md border px-2 py-2 text-sm"
           >
             <option value="todos">Todos</option>
@@ -182,9 +179,7 @@ export function AuditClient({
                 </td>
               </tr>
             ) : (
-              rows.map((row) => (
-                <AuditRow key={row.id} row={row} />
-              ))
+              rows.map((row) => <AuditRow key={row.id} row={row} />)
             )}
           </tbody>
         </table>
@@ -197,7 +192,7 @@ function AuditRow({ row }: { row: AuditLogRow }) {
   const fecha = new Date(row.created_at);
   return (
     <tr className="border-brand/10 border-b last:border-0">
-      <td className="text-muted whitespace-nowrap px-3 py-2.5 text-xs">
+      <td className="text-muted px-3 py-2.5 text-xs whitespace-nowrap">
         {fecha.toLocaleString("es-MX", {
           dateStyle: "short",
           timeStyle: "medium",
@@ -227,11 +222,7 @@ function AuditRow({ row }: { row: AuditLogRow }) {
   );
 }
 
-function ResultBadge({
-  resultado,
-}: {
-  resultado: AuditLogRow["resultado"];
-}) {
+function ResultBadge({ resultado }: { resultado: AuditLogRow["resultado"] }) {
   const styles =
     resultado === "exito"
       ? "bg-accent-soft text-foreground"
@@ -241,7 +232,9 @@ function ResultBadge({
   const label =
     resultado === "exito" ? "Éxito" : resultado === "error" ? "Error" : "Info";
   return (
-    <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${styles}`}>
+    <span
+      className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${styles}`}
+    >
       {label}
     </span>
   );

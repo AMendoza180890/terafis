@@ -64,14 +64,13 @@ export function ClinicalEpisodesWorkspace({
   const [showCreate, setShowCreate] = useState(false);
 
   useEffect(() => {
+    // Sincroniza con el prop cuando el server component revalida (ej. crear expediente).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setEpisodes(initialEpisodes);
   }, [initialEpisodes]);
 
   const defaultId = useMemo(() => {
-    if (
-      initialClinicalId &&
-      initialEpisodes.some((e) => e.id === initialClinicalId)
-    ) {
+    if (initialClinicalId && initialEpisodes.some((e) => e.id === initialClinicalId)) {
       return initialClinicalId;
     }
     const activo = initialEpisodes.find((e) => e.estado === "activo");
@@ -82,6 +81,8 @@ export function ClinicalEpisodesWorkspace({
 
   useEffect(() => {
     if (defaultId && (!selectedId || !episodes.some((e) => e.id === selectedId))) {
+      // Corrige la selección cuando el expediente activo cambia o queda inválido.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedId(defaultId);
     }
   }, [defaultId, selectedId, episodes]);
@@ -117,25 +118,18 @@ export function ClinicalEpisodesWorkspace({
   function closeEpisode() {
     if (!selectedId || isClosed) return;
     if (
-      !window.confirm(
-        "¿Cerrar este expediente? No se podrán agregar más seguimientos.",
-      )
+      !window.confirm("¿Cerrar este expediente? No se podrán agregar más seguimientos.")
     ) {
       return;
     }
     startTransition(async () => {
-      const res = await closePatientClinicalEpisodeAction(
-        patientId,
-        selectedId,
-      );
+      const res = await closePatientClinicalEpisodeAction(patientId, selectedId);
       toast.fromActionResult(res, "Expediente cerrado");
       if (!res.ok) return;
       const today = new Date().toISOString().slice(0, 10);
       setEpisodes((prev) =>
         prev.map((e) =>
-          e.id === selectedId
-            ? { ...e, estado: "cerrado", fechaCierre: today }
-            : e,
+          e.id === selectedId ? { ...e, estado: "cerrado", fechaCierre: today } : e,
         ),
       );
       router.refresh();
@@ -147,8 +141,8 @@ export function ClinicalEpisodesWorkspace({
       <section className="border-brand/15 bg-surface rounded-xl border p-5">
         {!multiExpedienteEnabled ? (
           <p className="bg-brand-soft mb-4 rounded-md px-3 py-2 text-xs">
-            Puede ver el expediente y seguimientos actuales. Para crear varios
-            expedientes por paciente, aplique la migración{" "}
+            Puede ver el expediente y seguimientos actuales. Para crear varios expedientes
+            por paciente, aplique la migración{" "}
             <code className="font-mono">20260730300000_multi_expediente_clinico.sql</code>{" "}
             en Supabase → SQL Editor.
           </p>
@@ -177,9 +171,7 @@ export function ClinicalEpisodesWorkspace({
         {showCreate ? (
           <div className="border-brand/15 mt-4 flex flex-wrap items-end gap-2 rounded-lg border p-3">
             <label className="block min-w-[220px] flex-1 text-sm">
-              <span className="text-muted mb-1 block text-xs">
-                Título / motivo
-              </span>
+              <span className="text-muted mb-1 block text-xs">Título / motivo</span>
               <input
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
@@ -229,20 +221,16 @@ export function ClinicalEpisodesWorkspace({
                   onClick={() => setSelectedId(e.id)}
                   className={[
                     "rounded-md px-3 py-2 text-left text-sm transition-colors",
-                    active
-                      ? "bg-brand text-white"
-                      : "border-brand/20 border",
+                    active ? "bg-brand text-white" : "border-brand/20 border",
                   ].join(" ")}
                 >
                   <span className="block font-medium">{e.titulo}</span>
                   <span
-                    className={[
-                      "text-xs",
-                      active ? "text-white/80" : "text-muted",
-                    ].join(" ")}
+                    className={["text-xs", active ? "text-white/80" : "text-muted"].join(
+                      " ",
+                    )}
                   >
-                    {e.estado === "activo" ? "Activo" : "Cerrado"} ·{" "}
-                    {e.fechaApertura}
+                    {e.estado === "activo" ? "Activo" : "Cerrado"} · {e.fechaApertura}
                   </span>
                 </button>
               );

@@ -226,10 +226,13 @@ export async function updatePatientContactAction(raw: unknown): Promise<ActionRe
 
 export async function searchPatientsAction(raw: unknown) {
   const parsed = SearchPatientsSchema.safeParse(raw);
-  const staff = await requireCurrentStaff();
+  await requireCurrentStaff();
 
   if (!parsed.success) {
-    return { ok: false as const, error: parsed.error.issues[0]?.message ?? "Búsqueda inválida" };
+    return {
+      ok: false as const,
+      error: parsed.error.issues[0]?.message ?? "Búsqueda inválida",
+    };
   }
 
   const q = parsed.data.q.replace(/[%_]/g, "\\$&");
@@ -355,9 +358,7 @@ export async function createPatientClinicalEpisodeAction(
   return { ok: true, id };
 }
 
-export async function updatePatientClinicalAction(
-  raw: unknown,
-): Promise<ActionResult> {
+export async function updatePatientClinicalAction(raw: unknown): Promise<ActionResult> {
   const parsed = UpdateClinicalEpisodeSchema.safeParse(raw);
   if (!parsed.success) {
     return {
@@ -539,8 +540,7 @@ export async function getPatientClinicalAction(clinicalId: string) {
       },
     };
   } catch (err) {
-    const msg =
-      err instanceof Error ? err.message : "No se pudo descifrar el expediente";
+    const msg = err instanceof Error ? err.message : "No se pudo descifrar el expediente";
     return { ok: false as const, error: msg };
   }
 }

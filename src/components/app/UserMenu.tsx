@@ -31,6 +31,8 @@ export function UserMenu({ profile }: { profile: UserMenuProfile }) {
   const rootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Sincroniza con el prop tras revalidación del servidor (ej. tras subir avatar).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setAvatarUrl(profile.avatarUrl);
   }, [profile.avatarUrl]);
 
@@ -90,19 +92,13 @@ export function UserMenu({ profile }: { profile: UserMenuProfile }) {
                   <p className="text-brand mt-1 text-xs capitalize">{profile.rol}</p>
                 ) : null}
               </div>
-              <MenuItem
-                label="Actualizar perfil"
-                onClick={() => setPanel("perfil")}
-              />
-              <MenuItem
-                label="Cambiar contraseña"
-                onClick={() => setPanel("password")}
-              />
+              <MenuItem label="Actualizar perfil" onClick={() => setPanel("perfil")} />
+              <MenuItem label="Cambiar contraseña" onClick={() => setPanel("password")} />
               <form action={signOutAction}>
                 <button
                   type="submit"
                   role="menuitem"
-                  className="text-red-700 hover:bg-red-50 dark:hover:bg-red-950/40 w-full rounded-md px-3 py-2 text-left text-sm"
+                  className="w-full rounded-md px-3 py-2 text-left text-sm text-red-700 hover:bg-red-50 dark:hover:bg-red-950/40"
                 >
                   Cerrar sesión
                 </button>
@@ -198,11 +194,7 @@ function ProfileForm({
 }) {
   return (
     <div className="space-y-3 p-1">
-      <button
-        type="button"
-        className="text-brand text-xs"
-        onClick={onBack}
-      >
+      <button type="button" className="text-brand text-xs" onClick={onBack}>
         ← Volver
       </button>
       <p className="text-sm font-semibold">Actualizar perfil</p>
@@ -242,17 +234,8 @@ function ProfileForm({
           });
         }}
       >
-        <Field
-          name="nombre"
-          label="Nombre"
-          defaultValue={profile.nombre}
-          required
-        />
-        <Field
-          name="telefono"
-          label="Teléfono"
-          defaultValue={profile.telefono ?? ""}
-        />
+        <Field name="nombre" label="Nombre" defaultValue={profile.nombre} required />
+        <Field name="telefono" label="Teléfono" defaultValue={profile.telefono ?? ""} />
         <Field
           name="especialidad"
           label="Especialidad"

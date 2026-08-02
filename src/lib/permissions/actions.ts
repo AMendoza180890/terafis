@@ -60,9 +60,7 @@ export async function listRoleMenuPermissionsAction(rol: StaffRole) {
   return { ok: true as const, allowedKeys, missingMigration: false as const };
 }
 
-export async function saveRoleMenuPermissionsAction(
-  raw: unknown,
-): Promise<ActionResult> {
+export async function saveRoleMenuPermissionsAction(raw: unknown): Promise<ActionResult> {
   const gate = await requireAdmin();
   if (!gate.ok) return { ok: false, error: gate.error };
 
@@ -75,7 +73,7 @@ export async function saveRoleMenuPermissionsAction(
   }
 
   const { rol, allowedKeys } = parsed.data;
-  let keys = new Set<MenuKey>(allowedKeys);
+  const keys = new Set<MenuKey>(allowedKeys);
   keys.add("inicio");
   if (rol === "admin") keys.add("permisos");
 
@@ -191,9 +189,7 @@ export async function getStaffMenuOverridesAction(staffId: string) {
   };
 }
 
-export async function saveStaffMenuOverridesAction(
-  raw: unknown,
-): Promise<ActionResult> {
+export async function saveStaffMenuOverridesAction(raw: unknown): Promise<ActionResult> {
   const gate = await requireAdmin();
   if (!gate.ok) return { ok: false, error: gate.error };
 
@@ -218,10 +214,7 @@ export async function saveStaffMenuOverridesAction(
   if (!member) return { ok: false, error: "Usuario no encontrado" };
 
   // Admin no puede quitarse a sí mismo el acceso a permisos.
-  if (
-    staffId === gate.staff.id &&
-    overrides.permisos === false
-  ) {
+  if (staffId === gate.staff.id && overrides.permisos === false) {
     return {
       ok: false,
       error: "No puede quitarse a sí mismo el acceso a Permisos",
@@ -229,9 +222,9 @@ export async function saveStaffMenuOverridesAction(
   }
 
   const now = new Date().toISOString();
-  const entries = Object.entries(overrides).filter(([k]) =>
-    isMenuKey(k),
-  ) as Array<[MenuKey, boolean]>;
+  const entries = Object.entries(overrides).filter(([k]) => isMenuKey(k)) as Array<
+    [MenuKey, boolean]
+  >;
 
   // Eliminar overrides previos del usuario y reinsertar los definidos.
   const { error: delErr } = await supabase
