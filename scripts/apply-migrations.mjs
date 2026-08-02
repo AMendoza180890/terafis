@@ -27,9 +27,20 @@ const files = readdirSync(migrationsDir)
   .filter((f) => f.endsWith(".sql"))
   .sort();
 
+const strictTls = process.env.PGSSL_STRICT === "1";
+if (!strictTls) {
+  console.warn(
+    "AVISO: conexión Postgres con rejectUnauthorized:false (no verifica el certificado TLS).",
+  );
+  console.warn(
+    "Esto acepta certificados no confiables (riesgo de MITM al aplicar migraciones).",
+  );
+  console.warn("Para verificar TLS con la CA del sistema, ejecute con PGSSL_STRICT=1.");
+}
+
 const client = new Client({
   connectionString: url,
-  ssl: { rejectUnauthorized: false },
+  ssl: { rejectUnauthorized: strictTls },
 });
 
 await client.connect();
@@ -59,10 +70,9 @@ for (const file of files) {
   try {
     await client.query("BEGIN");
     await client.query(sql);
-    await client.query(
-      "INSERT INTO public._terafis_migrations(filename) VALUES ($1)",
-      [file],
-    );
+    await client.query("INSERT INTO public._terafis_migrations(filename) VALUES ($1)", [
+      file,
+    ]);
     await client.query("COMMIT");
     console.log("OK  ", file);
   } catch (e) {

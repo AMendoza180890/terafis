@@ -16,8 +16,11 @@
  *
  * Uso:
  *   pnpm db:clean-demo                              # dry-run
- *   pnpm db:clean-demo:confirm                      # aplica
- *   node scripts/clean-demo-data.mjs --confirm --clinic-id=<uuid>
+ *   pnpm db:clean-demo:confirm                      # aplica (solo local/dev sin ref detectado)
+ *   node scripts/clean-demo-data.mjs --confirm --i-understand-prod --clinic-id=<uuid>
+ *
+ * Si el proyecto apunta a Supabase en la nube, --confirm exige además
+ * --i-understand-prod (se imprime el ref del proyecto antes de aplicar).
  *
  * Conexión:
  *   1) DATABASE_URL (Postgres / pooler)
@@ -116,13 +119,14 @@ function loadEnvLocal() {
 
 function parseArgs(argv) {
   const confirm = argv.includes("--confirm");
+  const iUnderstandProd = argv.includes("--i-understand-prod");
   const clinicArg = argv.find((a) => a.startsWith("--clinic-id="));
   const clinicId = clinicArg ? clinicArg.slice("--clinic-id=".length).trim() : null;
   if (clinicId && !/^[0-9a-f-]{36}$/i.test(clinicId)) {
     console.error("clinic-id inválido (se espera UUID).");
     process.exit(1);
   }
-  return { confirm, clinicId };
+  return { confirm, iUnderstandProd, clinicId };
 }
 
 function projectRefFromEnv() {
@@ -183,10 +187,9 @@ async function connectPg(baseUrl) {
 }
 
 async function pgTableExists(client, table) {
-  const { rows } = await client.query(
-    `SELECT to_regclass($1) IS NOT NULL AS ok`,
-    [`public.${table}`],
-  );
+  const { rows } = await client.query(`SELECT to_regclass($1) IS NOT NULL AS ok`, [
+    `public.${table}`,
+  ]);
   return Boolean(rows[0]?.ok);
 }
 
@@ -199,9 +202,7 @@ async function pgCount(client, table, clinicId) {
     );
     return rows[0].n;
   }
-  const { rows } = await client.query(
-    `SELECT COUNT(*)::int AS n FROM public.${table}`,
-  );
+  const { rows } = await client.query(`SELECT COUNT(*)::int AS n FROM public.${table}`);
   return rows[0].n;
 }
 
@@ -209,9 +210,7 @@ async function runViaPostgres(client, { confirm, clinicId }) {
   console.log("Conservar (catálogo / config):");
   for (const table of KEEP_TABLES) {
     const n = await pgCount(client, table, null);
-    console.log(
-      n === null ? `  - ${table}: (no existe)` : `  - ${table}: ${n} filas`,
-    );
+    console.log(n === null ? `  - ${table}: (no existe)` : `  - ${table}: ${n} filas`);
   }
 
   console.log("");
@@ -220,9 +219,7 @@ async function runViaPostgres(client, { confirm, clinicId }) {
   for (const table of CLEAR_TABLES) {
     const n = await pgCount(client, table, clinicId);
     counts[table] = n;
-    console.log(
-      n === null ? `  - ${table}: (no existe)` : `  - ${table}: ${n} filas`,
-    );
+    console.log(n === null ? `  - ${table}: (no existe)` : `  - ${table}: ${n} filas`);
   }
 
   const total = Object.values(counts).reduce(
@@ -284,9 +281,7 @@ function createAdminClient() {
 }
 
 async function apiCount(supabase, table, clinicId) {
-  let q = supabase
-    .from(table)
-    .select("id", { count: "exact", head: true });
+  let q = supabase.from(table).select("id", { count: "exact", head: true });
   if (clinicId) q = q.eq("clinic_id", clinicId);
   const { count, error } = await q;
   if (error) {
@@ -330,9 +325,7 @@ async function runViaApi({ confirm, clinicId }) {
       continue;
     }
     const n = await apiCount(supabase, table, null);
-    console.log(
-      n === null ? `  - ${table}: (no existe)` : `  - ${table}: ${n} filas`,
-    );
+    console.log(n === null ? `  - ${table}: (no existe)` : `  - ${table}: ${n} filas`);
   }
 
   console.log("");
@@ -341,9 +334,7 @@ async function runViaApi({ confirm, clinicId }) {
   for (const table of CLEAR_ORDER) {
     const n = await apiCount(supabase, table, clinicId);
     counts[table] = n;
-    console.log(
-      n === null ? `  - ${table}: (no existe)` : `  - ${table}: ${n} filas`,
-    );
+    console.log(n === null ? `  - ${table}: (no existe)` : `  - ${table}: ${n} filas`);
   }
 
   const total = Object.values(counts).reduce(
@@ -370,16 +361,22 @@ async function runViaApi({ confirm, clinicId }) {
 
   console.log("");
   console.log("Limpieza completada (vía REST).");
-  console.log("Staff, salas, servicios, productos, protocolos y permisos se conservaron.");
+  console.log(
+    "Staff, salas, servicios, productos, protocolos y permisos se conservaron.",
+  );
 }
 
 function printDryRunHint(clinicId) {
+  const ref = projectRefFromEnv();
+  const prodFlag = ref ? " --i-understand-prod" : "";
   console.log("");
   console.log("Dry-run listo. Para aplicar:");
   console.log(
     clinicId
-      ? `  node scripts/clean-demo-data.mjs --confirm --clinic-id=${clinicId}`
-      : "  pnpm db:clean-demo:confirm",
+      ? `  node scripts/clean-demo-data.mjs --confirm${prodFlag} --clinic-id=${clinicId}`
+      : ref
+        ? `  node scripts/clean-demo-data.mjs --confirm${prodFlag}`
+        : "  pnpm db:clean-demo:confirm",
   );
 }
 
@@ -387,15 +384,25 @@ async function main() {
   loadEnvLocal();
   const opts = parseArgs(process.argv.slice(2));
 
+  const ref = projectRefFromEnv();
   console.log("=== Terafis: limpieza de datos demo ===");
+  console.log("Proyecto Supabase:", ref ?? "(local / sin ref detectado)");
   console.log(
-    opts.confirm
-      ? "Modo: EJECUTAR"
-      : "Modo: DRY-RUN (añada --confirm para aplicar)",
+    opts.confirm ? "Modo: EJECUTAR" : "Modo: DRY-RUN (añada --confirm para aplicar)",
   );
   if (opts.clinicId) console.log("Alcance: clinic_id =", opts.clinicId);
   else console.log("Alcance: toda la base (todas las clínicas)");
   console.log("");
+
+  if (opts.confirm && ref && !opts.iUnderstandProd) {
+    console.error(
+      `Este comando apunta a un proyecto Supabase en la nube (ref: ${ref}), no a local/dev.`,
+    );
+    console.error(
+      "Si de verdad quiere borrar datos operativos ahí, repita el comando agregando --i-understand-prod.",
+    );
+    process.exit(1);
+  }
 
   const dbUrl = process.env.DATABASE_URL;
   let client = null;

@@ -26,8 +26,16 @@ Fuente de verdad del producto: [`plan-clinica-fisioterapia.md`](./plan-clinica-f
 
 ### Cron de recordatorios
 
+**Obligatorio en producción.** Vercel Cron está configurado en [`vercel.json`](./vercel.json)
+para invocar `/api/cron/reminders` cada 15 minutos vía GET. Vercel añade
+automáticamente el header `Authorization: Bearer $CRON_SECRET` si la variable
+de entorno `CRON_SECRET` está definida en el proyecto — solo hay que
+configurarla en Vercel (Project Settings → Environment Variables).
+
+Para probar manualmente (local o prod):
+
 ```bash
-curl -X POST "$NEXT_PUBLIC_APP_URL/api/cron/reminders" \
+curl "$NEXT_PUBLIC_APP_URL/api/cron/reminders" \
   -H "Authorization: Bearer $CRON_SECRET"
 ```
 

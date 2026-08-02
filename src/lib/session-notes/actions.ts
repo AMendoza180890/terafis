@@ -4,10 +4,8 @@ import { revalidatePath } from "next/cache";
 
 import { writeAuditError, writeAuditLog } from "@/lib/audit/write";
 import { requireCurrentStaff } from "@/lib/auth/current-staff";
-import {
-  decryptOptionalText,
-  encryptOptionalText,
-} from "@/lib/crypto/clinical-fields";
+import { decryptOptionalText, encryptOptionalText } from "@/lib/crypto/clinical-fields";
+import { clinicDayBoundsUtc, DEFAULT_TZ } from "@/lib/datetime/clinic-tz";
 import { RoleCapabilities } from "@/lib/roles";
 import {
   CreateSessionNoteSchema,
@@ -70,7 +68,10 @@ export async function createSessionNoteAction(raw: unknown): Promise<ActionResul
     .maybeSingle();
 
   let hasClinicalLink = !clinicalCheck.error;
-  if (clinicalCheck.error && /clinical_id|estado|column/i.test(clinicalCheck.error.message)) {
+  if (
+    clinicalCheck.error &&
+    /clinical_id|estado|column/i.test(clinicalCheck.error.message)
+  ) {
     hasClinicalLink = false;
   } else if (!clinicalCheck.error) {
     if (!clinicalCheck.data) {
@@ -201,8 +202,7 @@ export async function updateSessionNoteAction(raw: unknown): Promise<ActionResul
     .maybeSingle();
 
   const schemaHasClinical =
-    !clinicalCheck.error ||
-    !/column|estado/i.test(clinicalCheck.error?.message ?? "");
+    !clinicalCheck.error || !/column|estado/i.test(clinicalCheck.error?.message ?? "");
 
   if (schemaHasClinical && !clinicalCheck.error) {
     if (!clinicalCheck.data) {
@@ -302,13 +302,21 @@ export async function listSessionNotesAction(raw: unknown) {
   const { patientId, clinicalId, desde, hasta, atencion } = parsed.data;
   const supabase = await createClient();
 
+  let timezone = DEFAULT_TZ;
+  if (desde || hasta) {
+    const { data: cfg } = await supabase
+      .from("clinic_config")
+      .select("timezone")
+      .eq("clinic_id", staff.clinicId)
+      .maybeSingle();
+    timezone = (cfg as { timezone?: string } | null)?.timezone ?? DEFAULT_TZ;
+  }
+
   const selectCols =
     "id, patient_id, appointment_id, terapeuta_id, notas_evolucion, tratamiento, observaciones, rango_movimiento, dolor_eva, created_at";
 
   async function runQuery(withClinicalCol: boolean) {
-    const cols = withClinicalCol
-      ? `${selectCols}, clinical_id`
-      : selectCols;
+    const cols = withClinicalCol ? `${selectCols}, clinical_id` : selectCols;
     let query = supabase
       .from("session_notes")
       .select(cols as "id")
@@ -320,10 +328,10 @@ export async function listSessionNotesAction(raw: unknown) {
       query = query.or(`clinical_id.eq.${clinicalId},clinical_id.is.null`);
     }
     if (desde) {
-      query = query.gte("created_at", `${desde}T00:00:00.000Z`);
+      query = query.gte("created_at", clinicDayBoundsUtc(desde, timezone).startIso);
     }
     if (hasta) {
-      query = query.lte("created_at", `${hasta}T23:59:59.999Z`);
+      query = query.lt("created_at", clinicDayBoundsUtc(hasta, timezone).endIso);
     }
     if (atencion === "none") {
       query = query.is("appointment_id", null);
