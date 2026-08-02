@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm exec *)",
+      "Bash(node --check scripts/set-admin-password.mjs)",
+      "Bash(node --check scripts/clean-demo-data.mjs)",
+      "Bash(node --check scripts/apply-migrations.mjs)",
+      "Bash(node -e \"JSON.parse\\(require\\('fs'\\).readFileSync\\('vercel.json','utf8'\\)\\); console.log\\('vercel.json OK'\\)\")",
+      "Bash(pnpm run *)",
+      "Read(//tmp/**)",
+      "Bash(pnpm audit *)",
+      "Read(//c/Users/allan/AppData/Local/Temp/**)",
+      "Bash(gh auth *)",
+      "Bash(gh run *)"
+    ]
+  }
+}
