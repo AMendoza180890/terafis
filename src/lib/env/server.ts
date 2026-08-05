@@ -41,9 +41,17 @@ const productionServerEnvSchema = serverEnvSchema
     SUPABASE_SERVICE_ROLE_KEY: true,
     FIELD_ENCRYPTION_KEY: true,
     SEARCH_HMAC_KEY: true,
-    CRON_SECRET: true,
+    // CRON_SECRET opcional: Vercel Hobby no incluye Cron; el endpoint
+    // /api/cron/reminders solo se usa si invoca un scheduler externo.
   })
   .superRefine((data, ctx) => {
+    if (data.CRON_SECRET && data.CRON_SECRET.length < 32) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["CRON_SECRET"],
+        message: "Si define CRON_SECRET, debe tener al menos 32 caracteres",
+      });
+    }
     const strictHost =
       process.env.TERAFIS_STRICT_ENV === "1" || process.env.VERCEL_ENV === "production";
 

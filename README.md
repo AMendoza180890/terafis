@@ -24,20 +24,28 @@ Fuente de verdad del producto: [`plan-clinica-fisioterapia.md`](./plan-clinica-f
 
 **Fases 0–2**: cimientos, núcleo operativo, flujo de atención y dinero
 
-### Cron de recordatorios
+### Recordatorios / jobs en segundo plano
 
-**Obligatorio en producción.** Vercel Cron está configurado en [`vercel.json`](./vercel.json)
-para invocar `/api/cron/reminders` cada 15 minutos vía GET. Vercel añade
-automáticamente el header `Authorization: Bearer $CRON_SECRET` si la variable
-de entorno `CRON_SECRET` está definida en el proyecto — solo hay que
-configurarla en Vercel (Project Settings → Environment Variables).
+El plan **Hobby de Vercel no incluye Cron** (o se agota el cupo). Por eso
+**no** hay `vercel.json` con crons: el deploy no depende de Vercel Cron.
 
-Para probar manualmente (local o prod):
+El endpoint `/api/cron/reminders` sigue disponible (GET/POST) y requiere
+`Authorization: Bearer $CRON_SECRET`. Alternativas:
+
+1. **Manual / bajo demanda** (probar o disparar a mano):
 
 ```bash
-curl "$NEXT_PUBLIC_APP_URL/api/cron/reminders" \
+curl -X POST "$NEXT_PUBLIC_APP_URL/api/cron/reminders" \
   -H "Authorization: Bearer $CRON_SECRET"
 ```
+
+2. **Scheduler externo gratis** (cron-job.org, EasyCron, GitHub Actions
+   `schedule`, etc.) apuntando a esa URL cada 15–60 min con el header.
+
+3. **Supabase `pg_cron` + Edge Function / `net.http_post`** hacia la misma URL.
+
+Sin scheduler, la app despliega y opera con normalidad; solo dejan de
+procesarse automáticamente recordatorios y la cola de Google Calendar.
 
 ## Arranque local
 

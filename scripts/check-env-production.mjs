@@ -40,7 +40,6 @@ const required = [
   "SUPABASE_SERVICE_ROLE_KEY",
   "FIELD_ENCRYPTION_KEY",
   "SEARCH_HMAC_KEY",
-  "CRON_SECRET",
 ];
 
 const errors = [];
@@ -75,6 +74,11 @@ if (process.env.SEARCH_HMAC_KEY && !isKey32(process.env.SEARCH_HMAC_KEY)) {
 }
 if (process.env.CRON_SECRET && process.env.CRON_SECRET.length < 32) {
   errors.push("CRON_SECRET debe tener al menos 32 caracteres");
+}
+if (!process.env.CRON_SECRET?.trim()) {
+  console.warn(
+    "Aviso: CRON_SECRET no definido. /api/cron/reminders quedará inactivo hasta que un scheduler externo lo invoque con ese header.",
+  );
 }
 
 for (const [key] of Object.entries(process.env)) {
