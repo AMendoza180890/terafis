@@ -1,10 +1,22 @@
 import { z } from "zod";
 
-/** Detalle libre de ejercicios, series y repeticiones (textarea). */
+import { TREATMENT_PLAN_FIELD_LABELS } from "@/lib/labels/treatment-plan";
+
+/** Nombre canónico del bloque libre en treatment_exercises.nombre */
+export const PLAN_DETALLE_EJERCICIO_NOMBRE =
+  TREATMENT_PLAN_FIELD_LABELS.ejerciciosDetalle;
+
+/** Nombres previos (compatibilidad al leer planes ya guardados). */
+const PLAN_DETALLE_EJERCICIO_NOMBRES_LEGACY = [
+  "Ejercicios, series y repeticiones",
+  "Ejercicio, series y repeticiones",
+] as const;
+
+/** Detalle libre: recomendaciones y contraindicaciones (textarea). */
 export const EjerciciosDetalleSchema = z
   .string()
   .trim()
-  .min(1, "Indique ejercicios, series y repeticiones")
+  .min(1, `Indique ${TREATMENT_PLAN_FIELD_LABELS.ejerciciosDetalle.toLowerCase()}`)
   .max(10000);
 
 export const TreatmentPlanFieldsSchema = z.object({
@@ -26,7 +38,7 @@ export type TreatmentPlanFieldsInput = z.infer<typeof TreatmentPlanFieldsSchema>
 export function ejerciciosDetalleToRows(detalle: string) {
   return [
     {
-      nombre: "Ejercicios, series y repeticiones",
+      nombre: PLAN_DETALLE_EJERCICIO_NOMBRE,
       descripcion: detalle,
       series: undefined as number | undefined,
       repeticiones: undefined as number | undefined,
@@ -34,6 +46,13 @@ export function ejerciciosDetalleToRows(detalle: string) {
       orden: 0,
     },
   ];
+}
+
+function isDetalleLibreNombre(nombre: string): boolean {
+  return (
+    nombre === PLAN_DETALLE_EJERCICIO_NOMBRE ||
+    (PLAN_DETALLE_EJERCICIO_NOMBRES_LEGACY as readonly string[]).includes(nombre)
+  );
 }
 
 /** Reconstruye el textarea desde filas de ejercicios (legado o formato nuevo). */
@@ -46,10 +65,7 @@ export function exercisesToDetalle(
   }>,
 ): string {
   if (exercises.length === 0) return "";
-  if (
-    exercises.length === 1 &&
-    exercises[0]!.nombre === "Ejercicios, series y repeticiones"
-  ) {
+  if (exercises.length === 1 && isDetalleLibreNombre(exercises[0]!.nombre)) {
     return exercises[0]!.descripcion?.trim() ?? "";
   }
   return exercises
@@ -99,7 +115,7 @@ export const DEFAULT_PROTOCOLS = [
     descripcion: "Protocolo base de estabilización lumbar",
     exercises: [
       {
-        nombre: "Ejercicios, series y repeticiones",
+        nombre: PLAN_DETALLE_EJERCICIO_NOMBRE,
         descripcion:
           "Puente de glúteos: 3 series × 12 repeticiones — Activación glútea en decúbito.\nBird-dog: 3 series × 10 repeticiones — Control motor en cuadrupedia.",
       },
@@ -111,7 +127,7 @@ export const DEFAULT_PROTOCOLS = [
     descripcion: "Movilidad progresiva de hombro",
     exercises: [
       {
-        nombre: "Ejercicios, series y repeticiones",
+        nombre: PLAN_DETALLE_EJERCICIO_NOMBRE,
         descripcion:
           "Péndulos de Codman: 2 series × 20 repeticiones.\nDeslizamiento en pared: 3 series × 10 repeticiones.",
       },
@@ -123,7 +139,7 @@ export const DEFAULT_PROTOCOLS = [
     descripcion: "Propiocepción y carga progresiva",
     exercises: [
       {
-        nombre: "Ejercicios, series y repeticiones",
+        nombre: PLAN_DETALLE_EJERCICIO_NOMBRE,
         descripcion:
           "Equilibrio unipodal: 3 series × 30 s.\nBanda elástica eversión: 3 series × 15 repeticiones.",
       },

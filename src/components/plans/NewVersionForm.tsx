@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { AutoTextarea } from "@/components/ui/AutoTextarea";
+import { TREATMENT_PLAN_FIELD_LABELS } from "@/lib/labels/treatment-plan";
 import { createPlanVersionAction } from "@/lib/treatment-plans/actions";
 
 export function NewVersionForm({
@@ -54,7 +55,9 @@ export function NewVersionForm({
         Cada edición crea una versión nueva (no se sobrescribe el historial).
       </p>
       <label className="block text-sm">
-        <span className="text-muted mb-1 block">Diagnóstico</span>
+        <span className="text-muted mb-1 block">
+          {TREATMENT_PLAN_FIELD_LABELS.diagnostico}
+        </span>
         <AutoTextarea
           name="diagnostico"
           required
@@ -64,7 +67,9 @@ export function NewVersionForm({
         />
       </label>
       <label className="block text-sm">
-        <span className="text-muted mb-1 block">Objetivo</span>
+        <span className="text-muted mb-1 block">
+          {TREATMENT_PLAN_FIELD_LABELS.objetivo}
+        </span>
         <AutoTextarea
           name="objetivo"
           required
@@ -74,7 +79,9 @@ export function NewVersionForm({
         />
       </label>
       <label className="block text-sm">
-        <span className="text-muted mb-1 block">Frecuencia</span>
+        <span className="text-muted mb-1 block">
+          {TREATMENT_PLAN_FIELD_LABELS.frecuencia}
+        </span>
         <input
           name="frecuencia"
           required
@@ -83,7 +90,9 @@ export function NewVersionForm({
         />
       </label>
       <label className="block text-sm">
-        <span className="text-muted mb-1 block">Semanas</span>
+        <span className="text-muted mb-1 block">
+          {TREATMENT_PLAN_FIELD_LABELS.duracionSemanas}
+        </span>
         <input
           name="semanas"
           type="number"
@@ -93,7 +102,7 @@ export function NewVersionForm({
       </label>
       <label className="block text-sm">
         <span className="text-muted mb-1 block">
-          Ejercicio, series y repeticiones
+          {TREATMENT_PLAN_FIELD_LABELS.ejerciciosDetalle}
         </span>
         <AutoTextarea
           name="ejerciciosDetalle"

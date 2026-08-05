@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { CLINICAL_FIELD_LABELS } from "@/lib/labels/clinical";
+
 export const PatientContactSchema = z.object({
   nombre: z.string().trim().min(2, "Nombre demasiado corto").max(200),
   telefono: z.string().trim().min(7, "Teléfono inválido").max(30),
@@ -33,13 +35,28 @@ export const PatientContactSchema = z.object({
 
 export type PatientContactInput = z.infer<typeof PatientContactSchema>;
 
+/** Escala de VASS 0–10; se guarda como string (campo clínico cifrado). */
+const VassScaleSchema = z
+  .union([
+    z.literal(""),
+    z
+      .string()
+      .trim()
+      .regex(
+        /^(10|[0-9])$/,
+        `${CLINICAL_FIELD_LABELS.anamnesis}: use un entero de 0 a 10`,
+      ),
+  ])
+  .optional()
+  .transform((v) => (!v ? undefined : v));
+
 export const PatientClinicalSchema = z.object({
   titulo: z.string().trim().min(2).max(200).optional(),
   historialMedico: z.string().max(10000).optional(),
   alergias: z.string().max(5000).optional(),
   medicamentos: z.string().max(5000).optional(),
   diagnosticosPrevios: z.string().max(5000).optional(),
-  anamnesis: z.string().max(10000).optional(),
+  anamnesis: VassScaleSchema,
   exploracionFisica: z.string().max(10000).optional(),
   diagnosticoFisioterapeutico: z.string().max(5000).optional(),
   objetivoTratamiento: z.string().max(5000).optional(),

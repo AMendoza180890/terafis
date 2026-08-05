@@ -6,6 +6,7 @@ import { useState, useTransition } from "react";
 
 import { useToast } from "@/components/notifications/ToastProvider";
 import { AutoTextarea } from "@/components/ui/AutoTextarea";
+import { CLINICAL_FIELD_LABELS } from "@/lib/labels/clinical";
 import { createPatientAction } from "@/lib/patients/actions";
 
 type DoctorOpt = { id: string; label: string };
@@ -140,17 +141,40 @@ export function PatientForm({
           <p className="text-muted text-sm">
             Solo visible para admin y terapeutas. Se cifra antes de guardar.
           </p>
-          <TextArea label="Historial médico" name="historialMedico" />
-          <TextArea label="Alergias" name="alergias" />
-          <TextArea label="Medicamentos" name="medicamentos" />
-          <TextArea label="Diagnósticos previos" name="diagnosticosPrevios" />
-          <TextArea label="Anamnesis" name="anamnesis" />
-          <TextArea label="Exploración física" name="exploracionFisica" />
           <TextArea
-            label="Diagnóstico fisioterapéutico"
+            label={CLINICAL_FIELD_LABELS.historialMedico}
+            name="historialMedico"
+          />
+          <TextArea label={CLINICAL_FIELD_LABELS.alergias} name="alergias" />
+          <TextArea
+            label={CLINICAL_FIELD_LABELS.medicamentos}
+            name="medicamentos"
+          />
+          <TextArea
+            label={CLINICAL_FIELD_LABELS.diagnosticosPrevios}
+            name="diagnosticosPrevios"
+          />
+          <Field
+            label={CLINICAL_FIELD_LABELS.anamnesis}
+            name="anamnesis"
+            type="number"
+            min={0}
+            max={10}
+            step={1}
+            inputMode="numeric"
+          />
+          <TextArea
+            label={CLINICAL_FIELD_LABELS.exploracionFisica}
+            name="exploracionFisica"
+          />
+          <TextArea
+            label={CLINICAL_FIELD_LABELS.diagnosticoFisioterapeutico}
             name="diagnosticoFisioterapeutico"
           />
-          <TextArea label="Objetivo de tratamiento" name="objetivoTratamiento" />
+          <TextArea
+            label={CLINICAL_FIELD_LABELS.objetivoTratamiento}
+            name="objetivoTratamiento"
+          />
         </section>
       ) : (
         <p className="bg-brand-soft/50 text-muted rounded-md p-3 text-sm">
@@ -180,11 +204,19 @@ function Field({
   name,
   type = "text",
   required,
+  min,
+  max,
+  step,
+  inputMode,
 }: {
   label: string;
   name: string;
   type?: string;
   required?: boolean;
+  min?: number;
+  max?: number;
+  step?: number;
+  inputMode?: "numeric" | "text" | "tel" | "email";
 }) {
   return (
     <label className="block text-sm">
@@ -193,6 +225,10 @@ function Field({
         name={name}
         type={type}
         required={required}
+        min={min}
+        max={max}
+        step={step}
+        inputMode={inputMode}
         className="border-brand/20 bg-background ring-brand w-full rounded-md border px-3 py-2 outline-none focus:ring-2"
       />
     </label>

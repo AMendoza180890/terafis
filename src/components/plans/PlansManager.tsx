@@ -5,6 +5,10 @@ import { useState, useTransition } from "react";
 
 import { AutoTextarea } from "@/components/ui/AutoTextarea";
 import {
+  TREATMENT_PLAN_FIELD_LABELS,
+  TREATMENT_PLAN_PLACEHOLDERS,
+} from "@/lib/labels/treatment-plan";
+import {
   createTreatmentPlanAction,
   seedProtocolsAction,
 } from "@/lib/treatment-plans/actions";
@@ -82,7 +86,7 @@ export function PlansManager({
         </label>
         <label className="block text-sm">
           <span className="text-muted mb-1 block">
-            Diagnóstico fisioterapéutico
+            {TREATMENT_PLAN_FIELD_LABELS.diagnostico}
           </span>
           <AutoTextarea
             name="diagnostico"
@@ -92,7 +96,9 @@ export function PlansManager({
           />
         </label>
         <label className="block text-sm">
-          <span className="text-muted mb-1 block">Objetivo</span>
+          <span className="text-muted mb-1 block">
+            {TREATMENT_PLAN_FIELD_LABELS.objetivo}
+          </span>
           <AutoTextarea
             name="objetivo"
             required
@@ -100,19 +106,25 @@ export function PlansManager({
             className="border-brand/20 bg-background w-full rounded-md border px-3 py-2"
           />
         </label>
-        <Field name="frecuencia" label="Frecuencia (ej. 2x/semana)" required />
-        <Field name="semanas" label="Duración semanas" type="number" />
+        <Field
+          name="frecuencia"
+          label={TREATMENT_PLAN_FIELD_LABELS.frecuencia}
+          required
+        />
+        <Field
+          name="semanas"
+          label={TREATMENT_PLAN_FIELD_LABELS.duracionSemanas}
+          type="number"
+        />
         <label className="block text-sm">
           <span className="text-muted mb-1 block">
-            Ejercicio, series y repeticiones
+            {TREATMENT_PLAN_FIELD_LABELS.ejerciciosDetalle}
           </span>
           <AutoTextarea
             name="ejerciciosDetalle"
             required
             minRows={4}
-            placeholder={
-              "Ej.\nPuente de glúteos — 3 series × 12 repeticiones\nBird-dog — 3 series × 10"
-            }
+            placeholder={TREATMENT_PLAN_PLACEHOLDERS.ejerciciosDetalle}
             className="border-brand/20 bg-background w-full rounded-md border px-3 py-2"
           />
         </label>

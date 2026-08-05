@@ -1,6 +1,10 @@
 "use client";
 
 import { AutoTextarea } from "@/components/ui/AutoTextarea";
+import {
+  TREATMENT_PLAN_FIELD_LABELS,
+  TREATMENT_PLAN_PLACEHOLDERS,
+} from "@/lib/labels/treatment-plan";
 
 export type PlanFormState = {
   diagnostico: string;
@@ -49,7 +53,9 @@ export function TreatmentPlanFields({
       ) : null}
 
       <label className="block text-sm">
-        <span className="text-muted mb-1 block">Diagnóstico fisioterapéutico</span>
+        <span className="text-muted mb-1 block">
+          {TREATMENT_PLAN_FIELD_LABELS.diagnostico}
+        </span>
         <AutoTextarea
           required={required}
           disabled={disabled}
@@ -60,7 +66,9 @@ export function TreatmentPlanFields({
         />
       </label>
       <label className="block text-sm">
-        <span className="text-muted mb-1 block">Objetivo</span>
+        <span className="text-muted mb-1 block">
+          {TREATMENT_PLAN_FIELD_LABELS.objetivo}
+        </span>
         <AutoTextarea
           required={required}
           disabled={disabled}
@@ -71,7 +79,9 @@ export function TreatmentPlanFields({
         />
       </label>
       <label className="block text-sm">
-        <span className="text-muted mb-1 block">Frecuencia (ej. 2x/semana)</span>
+        <span className="text-muted mb-1 block">
+          {TREATMENT_PLAN_FIELD_LABELS.frecuencia}
+        </span>
         <input
           required={required}
           disabled={disabled}
@@ -81,7 +91,9 @@ export function TreatmentPlanFields({
         />
       </label>
       <label className="block text-sm">
-        <span className="text-muted mb-1 block">Duración (semanas)</span>
+        <span className="text-muted mb-1 block">
+          {TREATMENT_PLAN_FIELD_LABELS.duracionSemanas}
+        </span>
         <input
           type="number"
           min={1}
@@ -93,7 +105,7 @@ export function TreatmentPlanFields({
       </label>
       <label className="block text-sm">
         <span className="text-muted mb-1 block">
-          Ejercicio, series y repeticiones
+          {TREATMENT_PLAN_FIELD_LABELS.ejerciciosDetalle}
         </span>
         <AutoTextarea
           required={required}
@@ -101,9 +113,7 @@ export function TreatmentPlanFields({
           minRows={4}
           value={value.ejerciciosDetalle}
           onChange={(e) => set("ejerciciosDetalle", e.target.value)}
-          placeholder={
-            "Ej.\nPuente de glúteos — 3 series × 12 repeticiones\nBird-dog — 3 series × 10, pausa 5 s"
-          }
+          placeholder={TREATMENT_PLAN_PLACEHOLDERS.ejerciciosDetalle}
           className="border-brand/20 bg-background w-full rounded-md border px-3 py-2 disabled:opacity-70"
         />
       </label>

@@ -4,6 +4,7 @@ import { NewVersionForm } from "@/components/plans/NewVersionForm";
 import { ActionButton } from "@/components/ui/ActionButton";
 import { getCurrentStaff } from "@/lib/auth/current-staff";
 import { decryptField } from "@/lib/crypto/aes-gcm";
+import { TREATMENT_PLAN_FIELD_LABELS } from "@/lib/labels/treatment-plan";
 import { requireMenuAccess } from "@/lib/permissions/require";
 import { createClient } from "@/lib/supabase/server";
 import { exercisesToDetalle } from "@/lib/treatment-plans/schemas";
@@ -124,14 +125,18 @@ export default async function PlanDetailPage({ params }: Props) {
             <p className="font-medium">Versión {v.version}</p>
             <p className="text-muted text-xs">{v.frecuencia}</p>
             <p className="mt-2">
-              <strong>Diagnóstico:</strong> {v.diagnostico}
+              <strong>{TREATMENT_PLAN_FIELD_LABELS.diagnostico}:</strong>{" "}
+              {v.diagnostico}
             </p>
             <p>
-              <strong>Objetivo:</strong> {v.objetivo}
+              <strong>{TREATMENT_PLAN_FIELD_LABELS.objetivo}:</strong>{" "}
+              {v.objetivo}
             </p>
             {v.ejerciciosDetalle ? (
               <p className="mt-2 whitespace-pre-wrap">
-                <strong>Ejercicio, series y repeticiones:</strong>
+                <strong>
+                  {TREATMENT_PLAN_FIELD_LABELS.ejerciciosDetalle}:
+                </strong>
                 {"\n"}
                 {v.ejerciciosDetalle}
               </p>
