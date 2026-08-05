@@ -23,7 +23,7 @@ const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Terafis — Centro de Fisioterapia",
+    default: "Terafis — Clínica de Fisioterapia",
     template: "%s — Terafis",
   },
   description:
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
     type: "website",
     locale: "es_MX",
     siteName: "Terafis",
-    title: "Terafis — Centro de Fisioterapia",
+    title: "Terafis — Clínica de Fisioterapia",
     description:
       "Gestión clínica para fisioterapia: agenda, expedientes, cola de atención y cobros.",
     images: [
@@ -49,13 +49,13 @@ export const metadata: Metadata = {
         url: BRAND_OG_SRC,
         width: 1200,
         height: 630,
-        alt: "Terafis — Centro de Fisioterapia",
+        alt: "Terafis — Clínica de Fisioterapia",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Terafis — Centro de Fisioterapia",
+    title: "Terafis — Clínica de Fisioterapia",
     description:
       "Gestión clínica para fisioterapia: agenda, expedientes, cola de atención y cobros.",
     images: [BRAND_OG_SRC],
