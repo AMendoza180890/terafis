@@ -186,10 +186,7 @@ export type LatestPlanView = {
 
 export async function getLatestTreatmentPlanForPatientAction(
   patientId: string,
-): Promise<
-  | { ok: true; plan: LatestPlanView | null }
-  | { ok: false; error: string }
-> {
+): Promise<{ ok: true; plan: LatestPlanView | null } | { ok: false; error: string }> {
   const staff = await requireCurrentStaff();
   if (staff.rol === "recepcionista") {
     return { ok: false, error: "Sin permiso" };
@@ -213,9 +210,7 @@ export async function getLatestTreatmentPlanForPatientAction(
 
   const { data: version } = await supabase
     .from("treatment_plan_versions")
-    .select(
-      "id, version, diagnostico, objetivo, frecuencia, duracion_estimada_semanas",
-    )
+    .select("id, version, diagnostico, objetivo, frecuencia, duracion_estimada_semanas")
     .eq("plan_id", planId)
     .eq("version", versionNum)
     .maybeSingle();
@@ -311,9 +306,7 @@ export async function ensureTreatmentPlanFromSessionAction(
   }
 
   const staff = await requireCurrentStaff();
-  const latest = await getLatestTreatmentPlanForPatientAction(
-    parsed.data.patientId,
-  );
+  const latest = await getLatestTreatmentPlanForPatientAction(parsed.data.patientId);
   if (!latest.ok) return latest;
 
   let result: ActionResult;
@@ -327,8 +320,7 @@ export async function ensureTreatmentPlanFromSessionAction(
       latest.plan.frecuencia.trim() === parsed.data.frecuencia.trim() &&
       (latest.plan.duracionEstimadaSemanas ?? null) ===
         (parsed.data.duracionEstimadaSemanas ?? null) &&
-      latest.plan.ejerciciosDetalle.trim() ===
-        parsed.data.ejerciciosDetalle.trim();
+      latest.plan.ejerciciosDetalle.trim() === parsed.data.ejerciciosDetalle.trim();
 
     if (same) {
       result = {
@@ -348,11 +340,7 @@ export async function ensureTreatmentPlanFromSessionAction(
     }
   }
 
-  if (
-    result.ok &&
-    parsed.data.appointmentId &&
-    staff.rol !== "recepcionista"
-  ) {
+  if (result.ok && parsed.data.appointmentId && staff.rol !== "recepcionista") {
     await linkPlanToAppointment({
       clinicId: staff.clinicId,
       planId: result.id,

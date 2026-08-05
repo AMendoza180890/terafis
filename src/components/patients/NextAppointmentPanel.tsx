@@ -119,9 +119,7 @@ export function NextAppointmentPanel({
           )}
 
           {lockTherapist ? (
-            <p className="text-muted text-xs">
-              Se agendará con usted como terapeuta.
-            </p>
+            <p className="text-muted text-xs">Se agendará con usted como terapeuta.</p>
           ) : null}
 
           <div className="grid gap-3 sm:grid-cols-3">

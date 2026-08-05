@@ -22,20 +22,11 @@ export async function findFreeTherapistSlot(params: {
   desiredInicioIso: string;
   duracionMinutos: number;
 }): Promise<{ inicio: string; fin: string }> {
-  const {
-    supabase,
-    terapeutaId,
-    fecha,
-    timezone,
-    desiredInicioIso,
-    duracionMinutos,
-  } = params;
+  const { supabase, terapeutaId, fecha, timezone, desiredInicioIso, duracionMinutos } =
+    params;
 
   const dayStart = clinicLocalToUtcIso(fecha, "00:00", timezone);
-  const nextDay = addMinutesIso(
-    clinicLocalToUtcIso(fecha, "23:59", timezone),
-    2,
-  );
+  const nextDay = addMinutesIso(clinicLocalToUtcIso(fecha, "23:59", timezone), 2);
 
   const { data } = await supabase
     .from("appointments")

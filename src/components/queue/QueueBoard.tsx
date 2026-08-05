@@ -254,7 +254,7 @@ export function QueueBoard({
                         {item.patientNombre}
                       </Link>
                       {statusHint(col.estado) ? (
-                        <span className="bg-brand-soft text-foreground rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
+                        <span className="bg-brand-soft text-foreground rounded px-1.5 py-0.5 text-[10px] font-semibold tracking-wide uppercase">
                           {statusHint(col.estado)}
                         </span>
                       ) : null}
@@ -267,9 +267,7 @@ export function QueueBoard({
                       {item.tipoServicio ? ` · ${item.tipoServicio}` : ""}
                     </p>
                     {item.patientTelefono ? (
-                      <p className="text-muted text-xs">
-                        Tel. {item.patientTelefono}
-                      </p>
+                      <p className="text-muted text-xs">Tel. {item.patientTelefono}</p>
                     ) : null}
                     {col.estado === "en_consulta" && item.horaInicioAtencion ? (
                       <p className="text-accent mt-1 text-xs font-medium">
@@ -313,8 +311,7 @@ export function QueueBoard({
                       </div>
                     ) : null}
                     {item.notasRecepcion &&
-                    (col.estado === "en_consulta" ||
-                      col.estado === "pendiente_pago") ? (
+                    (col.estado === "en_consulta" || col.estado === "pendiente_pago") ? (
                       <p className="text-muted mt-1 line-clamp-2 text-xs">
                         Nota: {item.notasRecepcion}
                       </p>
@@ -333,9 +330,7 @@ export function QueueBoard({
                             onClick={() => transition(item, "en_consulta")}
                           />
                         ) : null}
-                        {canAttend &&
-                        isOwnTurn(item) &&
-                        col.estado === "en_consulta" ? (
+                        {canAttend && isOwnTurn(item) && col.estado === "en_consulta" ? (
                           <Action
                             label="Retornar a atención"
                             onClick={() =>
@@ -349,13 +344,8 @@ export function QueueBoard({
                             onClick={() => setFinalizeItem(item)}
                           />
                         ) : null}
-                        {canManage &&
-                        col.estado === "pendiente_pago" &&
-                        canCharge ? (
-                          <Action
-                            label="Cobrar"
-                            onClick={() => setChargeItem(item)}
-                          />
+                        {canManage && col.estado === "pendiente_pago" && canCharge ? (
+                          <Action label="Cobrar" onClick={() => setChargeItem(item)} />
                         ) : null}
                         {canManage &&
                         col.estado !== "completado" &&

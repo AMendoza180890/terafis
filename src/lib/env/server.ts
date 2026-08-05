@@ -45,8 +45,7 @@ const productionServerEnvSchema = serverEnvSchema
   })
   .superRefine((data, ctx) => {
     const strictHost =
-      process.env.TERAFIS_STRICT_ENV === "1" ||
-      process.env.VERCEL_ENV === "production";
+      process.env.TERAFIS_STRICT_ENV === "1" || process.env.VERCEL_ENV === "production";
 
     if (strictHost) {
       if (!data.NEXT_PUBLIC_APP_URL.startsWith("https://")) {
@@ -105,8 +104,7 @@ function readRawEnv() {
     TWILIO_ACCOUNT_SID: process.env.TWILIO_ACCOUNT_SID || undefined,
     TWILIO_AUTH_TOKEN: process.env.TWILIO_AUTH_TOKEN || undefined,
     TWILIO_FROM_NUMBER: process.env.TWILIO_FROM_NUMBER || undefined,
-    GOOGLE_SERVICE_ACCOUNT_EMAIL:
-      process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || undefined,
+    GOOGLE_SERVICE_ACCOUNT_EMAIL: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || undefined,
     GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY:
       process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY || undefined,
     GOOGLE_CALENDAR_ID: process.env.GOOGLE_CALENDAR_ID || undefined,

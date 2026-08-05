@@ -42,7 +42,8 @@ export function toExcelXml(
       const cells = headers
         .map((_, i) => {
           const v = row[i];
-          const isNum = typeof v === "number" || (typeof v === "string" && /^-?\d+(\.\d+)?$/.test(v));
+          const isNum =
+            typeof v === "number" || (typeof v === "string" && /^-?\d+(\.\d+)?$/.test(v));
           const type = isNum ? "Number" : "String";
           return `<Cell><Data ss:Type="${type}">${xmlEscape(v)}</Data></Cell>`;
         })
@@ -87,9 +88,7 @@ export function toSimplePdf(title: string, lines: string[]): Uint8Array {
   objects.push(
     `4 0 obj<< /Length ${stream.length} >>stream\n${stream}\nendstream\nendobj\n`,
   );
-  objects.push(
-    "5 0 obj<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>endobj\n",
-  );
+  objects.push("5 0 obj<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>endobj\n");
 
   const enc = new TextEncoder();
   const byteLen = (s: string) => enc.encode(s).length;

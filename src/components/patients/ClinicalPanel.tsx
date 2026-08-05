@@ -26,11 +26,7 @@ function normalizeVassScale(value: string | null | undefined): string {
   return "";
 }
 
-export function ClinicalPanel({
-  patientId,
-  clinicalId,
-  readOnly = false,
-}: Props) {
+export function ClinicalPanel({ patientId, clinicalId, readOnly = false }: Props) {
   const toast = useToast();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -62,8 +58,7 @@ export function ClinicalPanel({
           diagnosticosPrevios: result.clinical.diagnosticos_previos ?? "",
           anamnesis: normalizeVassScale(result.clinical.anamnesis),
           exploracionFisica: result.clinical.exploracion_fisica ?? "",
-          diagnosticoFisioterapeutico:
-            result.clinical.diagnostico_fisioterapeutico ?? "",
+          diagnosticoFisioterapeutico: result.clinical.diagnostico_fisioterapeutico ?? "",
           objetivoTratamiento: result.clinical.objetivo_tratamiento ?? "",
         });
       }
@@ -87,8 +82,7 @@ export function ClinicalPanel({
   }
 
   const hasContent =
-    titulo.trim().length > 0 ||
-    Object.values(values).some((v) => v.trim().length > 0);
+    titulo.trim().length > 0 || Object.values(values).some((v) => v.trim().length > 0);
 
   return (
     <form onSubmit={save} className="mt-4 space-y-3">
@@ -102,9 +96,7 @@ export function ClinicalPanel({
               : "Complete el expediente de este episodio."}
       </p>
       <label className="block text-sm">
-        <span className="text-muted mb-1 block">
-          {CLINICAL_FIELD_LABELS.titulo}
-        </span>
+        <span className="text-muted mb-1 block">{CLINICAL_FIELD_LABELS.titulo}</span>
         <input
           value={titulo}
           onChange={(e) => setTitulo(e.target.value)}
@@ -114,22 +106,13 @@ export function ClinicalPanel({
         />
       </label>
       {(
-        [
-          "historialMedico",
-          "alergias",
-          "medicamentos",
-          "diagnosticosPrevios",
-        ] as const
+        ["historialMedico", "alergias", "medicamentos", "diagnosticosPrevios"] as const
       ).map((key) => (
         <label key={key} className="block text-sm">
-          <span className="text-muted mb-1 block">
-            {CLINICAL_FIELD_LABELS[key]}
-          </span>
+          <span className="text-muted mb-1 block">{CLINICAL_FIELD_LABELS[key]}</span>
           <AutoTextarea
             value={values[key]}
-            onChange={(ev) =>
-              setValues((v) => ({ ...v, [key]: ev.target.value }))
-            }
+            onChange={(ev) => setValues((v) => ({ ...v, [key]: ev.target.value }))}
             minRows={2}
             disabled={readOnly}
             className="border-brand/20 bg-background w-full rounded-md border px-3 py-2 disabled:opacity-70"
@@ -137,9 +120,7 @@ export function ClinicalPanel({
         </label>
       ))}
       <label className="block text-sm">
-        <span className="text-muted mb-1 block">
-          {CLINICAL_FIELD_LABELS.anamnesis}
-        </span>
+        <span className="text-muted mb-1 block">{CLINICAL_FIELD_LABELS.anamnesis}</span>
         <input
           type="number"
           inputMode="numeric"
@@ -170,14 +151,10 @@ export function ClinicalPanel({
         ] as const
       ).map((key) => (
         <label key={key} className="block text-sm">
-          <span className="text-muted mb-1 block">
-            {CLINICAL_FIELD_LABELS[key]}
-          </span>
+          <span className="text-muted mb-1 block">{CLINICAL_FIELD_LABELS[key]}</span>
           <AutoTextarea
             value={values[key]}
-            onChange={(ev) =>
-              setValues((v) => ({ ...v, [key]: ev.target.value }))
-            }
+            onChange={(ev) => setValues((v) => ({ ...v, [key]: ev.target.value }))}
             minRows={2}
             disabled={readOnly}
             className="border-brand/20 bg-background w-full rounded-md border px-3 py-2 disabled:opacity-70"

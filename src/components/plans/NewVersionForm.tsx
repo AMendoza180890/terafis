@@ -42,9 +42,7 @@ export function NewVersionForm({
             ejerciciosDetalle: String(fd.get("ejerciciosDetalle") ?? ""),
           });
           setMessage(
-            result.ok
-              ? `Nueva versión ${result.version} guardada`
-              : result.error,
+            result.ok ? `Nueva versión ${result.version} guardada` : result.error,
           );
           if (result.ok) router.refresh();
         });

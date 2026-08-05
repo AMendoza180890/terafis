@@ -21,4 +21,3 @@ export function formatMoney(cents: Cents): string {
 }
 
 export { formatCordobas } from "@/lib/money/format";
-

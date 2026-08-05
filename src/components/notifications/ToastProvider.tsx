@@ -68,8 +68,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const push = useCallback(
     (toast: ToastInput) => {
       const id = `toast-${++toastId}`;
-      const duration =
-        toast.durationMs ?? (toast.kind === "error" ? 7000 : 4500);
+      const duration = toast.durationMs ?? (toast.kind === "error" ? 7000 : 4500);
       setItems((prev) => [...prev, { ...toast, id }].slice(-5));
       void maybeBrowserPush(toast);
       window.setTimeout(() => dismiss(id), duration);
@@ -84,8 +83,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         push({ kind: "exito", title, description, push: true }),
       error: (title, description) =>
         push({ kind: "error", title, description, push: true }),
-      info: (title, description) =>
-        push({ kind: "info", title, description }),
+      info: (title, description) => push({ kind: "info", title, description }),
       fromActionResult: (result, successTitle, successDescription) => {
         if (result.ok) {
           push({
@@ -121,12 +119,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             role={toast.kind === "error" ? "alert" : "status"}
             className={[
               "pointer-events-auto rounded-lg border px-4 py-3 shadow-lg backdrop-blur",
-              toast.kind === "exito" &&
-                "border-verde/40 bg-surface text-foreground",
-              toast.kind === "error" &&
-                "border-red-400/50 bg-surface text-foreground",
-              toast.kind === "info" &&
-                "border-brand/30 bg-surface text-foreground",
+              toast.kind === "exito" && "border-verde/40 bg-surface text-foreground",
+              toast.kind === "error" && "bg-surface text-foreground border-red-400/50",
+              toast.kind === "info" && "border-brand/30 bg-surface text-foreground",
             ]
               .filter(Boolean)
               .join(" ")}

@@ -28,7 +28,12 @@ const links: Array<{
   { href: "/app/doctores", label: "Doctores", menuKey: "doctores", icon: DoctorIcon },
   { href: "/app/agenda", label: "Agenda", menuKey: "agenda", icon: CalendarIcon },
   { href: "/app/cola", label: "Cola", menuKey: "cola", icon: QueueIcon },
-  { href: "/app/servicios", label: "Servicios", menuKey: "servicios", icon: ServicesIcon },
+  {
+    href: "/app/servicios",
+    label: "Servicios",
+    menuKey: "servicios",
+    icon: ServicesIcon,
+  },
   { href: "/app/caja", label: "Caja", menuKey: "caja", icon: CashIcon },
   { href: "/app/inventario", label: "Inventario", menuKey: "inventario", icon: BoxIcon },
   { href: "/app/reportes", label: "Reportes", menuKey: "reportes", icon: ChartIcon },
@@ -36,7 +41,12 @@ const links: Array<{
   { href: "/app/staff", label: "Staff", menuKey: "staff", icon: StaffIcon },
   { href: "/app/auditoria", label: "Auditoría", menuKey: "auditoria", icon: AuditIcon },
   { href: "/app/permisos", label: "Permisos", menuKey: "permisos", icon: LockIcon },
-  { href: "/app/configuracion", label: "Configuración", menuKey: "configuracion", icon: SettingsIcon },
+  {
+    href: "/app/configuracion",
+    label: "Configuración",
+    menuKey: "configuracion",
+    icon: SettingsIcon,
+  },
 ];
 
 export function AppShell({
@@ -93,9 +103,7 @@ export function AppShell({
               type="button"
               onClick={toggleSidebar}
               aria-label={
-                showLabels
-                  ? "Contraer menú a iconos"
-                  : "Expandir menú con etiquetas"
+                showLabels ? "Contraer menú a iconos" : "Expandir menú con etiquetas"
               }
               aria-expanded={showLabels}
               aria-controls="app-sidebar"
@@ -348,8 +356,21 @@ function DoctorIcon({ className }: IconProps) {
 function CalendarIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" className={className} fill="none" aria-hidden>
-      <rect x="3.5" y="5" width="17" height="15" rx="2" stroke="currentColor" strokeWidth="1.7" />
-      <path d="M8 3.5V7M16 3.5V7M3.5 10h17" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+      <rect
+        x="3.5"
+        y="5"
+        width="17"
+        height="15"
+        rx="2"
+        stroke="currentColor"
+        strokeWidth="1.7"
+      />
+      <path
+        d="M8 3.5V7M16 3.5V7M3.5 10h17"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
@@ -357,7 +378,12 @@ function CalendarIcon({ className }: IconProps) {
 function QueueIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" className={className} fill="none" aria-hidden>
-      <path d="M5 7h14M5 12h14M5 17h9" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+      <path
+        d="M5 7h14M5 12h14M5 17h9"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
@@ -378,7 +404,15 @@ function ServicesIcon({ className }: IconProps) {
 function CashIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" className={className} fill="none" aria-hidden>
-      <rect x="3" y="6" width="18" height="12" rx="2" stroke="currentColor" strokeWidth="1.7" />
+      <rect
+        x="3"
+        y="6"
+        width="18"
+        height="12"
+        rx="2"
+        stroke="currentColor"
+        strokeWidth="1.7"
+      />
       <circle cx="12" cy="12" r="2.5" stroke="currentColor" strokeWidth="1.7" />
     </svg>
   );
@@ -393,7 +427,12 @@ function BoxIcon({ className }: IconProps) {
         strokeWidth="1.7"
         strokeLinejoin="round"
       />
-      <path d="M12 12v8.5M4 8.5l8 3.5 8-3.5" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+      <path
+        d="M12 12v8.5M4 8.5l8 3.5 8-3.5"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
@@ -401,7 +440,12 @@ function BoxIcon({ className }: IconProps) {
 function ChartIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" className={className} fill="none" aria-hidden>
-      <path d="M4 19h16M7 16V10M12 16V7M17 16v-4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+      <path
+        d="M4 19h16M7 16V10M12 16V7M17 16v-4"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
@@ -415,7 +459,12 @@ function PlanIcon({ className }: IconProps) {
         strokeWidth="1.7"
         strokeLinejoin="round"
       />
-      <path d="M10 9h6M10 13h4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+      <path
+        d="M10 9h6M10 13h4"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }

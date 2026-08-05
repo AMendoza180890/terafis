@@ -26,9 +26,7 @@ export function revenueCents(payments: PaymentAggRow[]): Cents {
     .reduce((acc, p) => addCents(acc, toCents(p.monto)), 0 as Cents);
 }
 
-export function revenueByMethod(
-  payments: PaymentAggRow[],
-): Record<string, Cents> {
+export function revenueByMethod(payments: PaymentAggRow[]): Record<string, Cents> {
   const out: Record<string, Cents> = {};
   for (const p of payments) {
     if (p.estado !== "pagado") continue;

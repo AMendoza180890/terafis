@@ -75,9 +75,7 @@ export const StaffUpdateSchema = z
   .transform((data) => ({
     ...data,
     password:
-      data.password && data.password.trim().length > 0
-        ? data.password.trim()
-        : undefined,
+      data.password && data.password.trim().length > 0 ? data.password.trim() : undefined,
   }));
 
 export type StaffUpdateInput = z.infer<typeof StaffUpdateSchema>;

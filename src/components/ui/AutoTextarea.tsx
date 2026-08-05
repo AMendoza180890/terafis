@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  type TextareaHTMLAttributes,
-} from "react";
+import { useCallback, useEffect, useRef, type TextareaHTMLAttributes } from "react";
 
 type Props = TextareaHTMLAttributes<HTMLTextAreaElement> & {
   /** Altura mínima en filas (también se usa como `rows` inicial). */
@@ -60,7 +55,7 @@ export function AutoTextarea({
         resize(e.currentTarget);
         onChange?.(e);
       }}
-      className={["resize-none overflow-hidden [field-sizing:content]", className]
+      className={["[field-sizing:content] resize-none overflow-hidden", className]
         .filter(Boolean)
         .join(" ")}
     />

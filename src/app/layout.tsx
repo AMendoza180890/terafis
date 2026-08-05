@@ -3,11 +3,7 @@ import { cookies } from "next/headers";
 import { Source_Sans_3, Source_Serif_4 } from "next/font/google";
 
 import { ThemeScript } from "@/components/theme/ThemeScript";
-import {
-  BRAND_ICON_SRC,
-  BRAND_LOGO_SRC,
-  BRAND_OG_SRC,
-} from "@/lib/brand";
+import { BRAND_ICON_SRC, BRAND_LOGO_SRC, BRAND_OG_SRC } from "@/lib/brand";
 import { SCHEME_COOKIE } from "@/lib/theme/resolution";
 
 import "./globals.css";

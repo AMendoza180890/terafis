@@ -32,7 +32,7 @@ describe("CSV / Excel / PDF (4.8 contrato de formato)", () => {
     const xls = toExcelXml("Datos", ["a", "b"], [["1", "2"]]);
     expect(xls).toContain("Excel.Sheet");
     expect(xls).toContain('ss:Name="Datos"');
-    expect(xls).toContain("<Data ss:Type=\"Number\">1</Data>");
+    expect(xls).toContain('<Data ss:Type="Number">1</Data>');
   });
 
   it("genera PDF con cabecera %PDF", () => {

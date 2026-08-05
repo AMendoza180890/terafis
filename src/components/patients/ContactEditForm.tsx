@@ -81,18 +81,19 @@ export function ContactEditForm({
     >
       <Field name="nombre" label="Nombre" defaultValue={patient.nombre} required />
       <Field name="telefono" label="Teléfono" defaultValue={patient.telefono} required />
-      <Field name="email" label="Correo" defaultValue={patient.email ?? ""} type="email" />
+      <Field
+        name="email"
+        label="Correo"
+        defaultValue={patient.email ?? ""}
+        type="email"
+      />
       <Field
         name="fechaNacimiento"
         label="Fecha de nacimiento"
         defaultValue={patient.fechaNacimiento ?? ""}
         type="date"
       />
-      <Field
-        name="ocupacion"
-        label="Ocupación"
-        defaultValue={patient.ocupacion ?? ""}
-      />
+      <Field name="ocupacion" label="Ocupación" defaultValue={patient.ocupacion ?? ""} />
       <Field
         name="contactoEmergenciaNombre"
         label="Contacto de emergencia"

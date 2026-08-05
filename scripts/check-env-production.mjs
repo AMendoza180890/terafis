@@ -67,10 +67,7 @@ function isKey32(b64) {
   }
 }
 
-if (
-  process.env.FIELD_ENCRYPTION_KEY &&
-  !isKey32(process.env.FIELD_ENCRYPTION_KEY)
-) {
+if (process.env.FIELD_ENCRYPTION_KEY && !isKey32(process.env.FIELD_ENCRYPTION_KEY)) {
   errors.push("FIELD_ENCRYPTION_KEY debe ser 32 bytes en base64");
 }
 if (process.env.SEARCH_HMAC_KEY && !isKey32(process.env.SEARCH_HMAC_KEY)) {
@@ -82,9 +79,7 @@ if (process.env.CRON_SECRET && process.env.CRON_SECRET.length < 32) {
 
 for (const [key] of Object.entries(process.env)) {
   if (!key.startsWith("NEXT_PUBLIC_")) continue;
-  if (
-    /SERVICE_ROLE|DATABASE|ENCRYPTION|HMAC|SECRET|PRIVATE|PASSWORD/i.test(key)
-  ) {
+  if (/SERVICE_ROLE|DATABASE|ENCRYPTION|HMAC|SECRET|PRIVATE|PASSWORD/i.test(key)) {
     errors.push(`No use prefijo NEXT_PUBLIC_ en secreto: ${key}`);
   }
 }

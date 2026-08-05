@@ -25,10 +25,7 @@ type Props = {
 };
 
 export function CajaDashboard({ payments, timezone }: Props) {
-  const monthOptions = useMemo(
-    () => currentYearMonthOptions(timezone),
-    [timezone],
-  );
+  const monthOptions = useMemo(() => currentYearMonthOptions(timezone), [timezone]);
   const currentMonth = clinicCurrentMonthKey(timezone);
   const today = clinicTodayIso(timezone);
 
@@ -60,8 +57,7 @@ export function CajaDashboard({ payments, timezone }: Props) {
     [payments, timezone],
   );
 
-  const monthLabel =
-    monthOptions.find((m) => m.value === month)?.label ?? month;
+  const monthLabel = monthOptions.find((m) => m.value === month)?.label ?? month;
 
   function selectMonth(monthKey: string) {
     setMonth(monthKey);
@@ -104,8 +100,7 @@ export function CajaDashboard({ payments, timezone }: Props) {
         <div>
           <h2 className="font-semibold">Filtros</h2>
           <p className="text-muted mt-1 text-sm">
-            Mes en curso por defecto. Elija otro mes o un rango de fechas
-            atendidas.
+            Mes en curso por defecto. Elija otro mes o un rango de fechas atendidas.
           </p>
         </div>
 
@@ -186,9 +181,7 @@ export function CajaDashboard({ payments, timezone }: Props) {
                     onClick={() => selectDay(d)}
                     className={[
                       "rounded-md px-2.5 py-1 text-xs font-medium tabular-nums",
-                      active
-                        ? "bg-brand text-white"
-                        : "border-brand/20 border",
+                      active ? "bg-brand text-white" : "border-brand/20 border",
                     ].join(" ")}
                   >
                     {d.slice(8)}
@@ -219,10 +212,7 @@ export function CajaDashboard({ payments, timezone }: Props) {
         />
         <Stat label="Movimientos" value={String(summary.count)} />
         <Stat label="Efectivo" value={formatCordobas(summary.cash)} />
-        <Stat
-          label="Transferencia"
-          value={formatCordobas(summary.transferencia)}
-        />
+        <Stat label="Transferencia" value={formatCordobas(summary.transferencia)} />
       </div>
 
       <section>
@@ -256,15 +246,9 @@ export function CajaDashboard({ payments, timezone }: Props) {
                   return (
                     <tr key={p.id} className="border-brand/5 border-b align-top">
                       <td className="px-4 py-3 whitespace-nowrap">
-                        {formatInClinicTz(
-                          p.fechaPago,
-                          timezone,
-                          "dd/MM/yyyy HH:mm",
-                        )}
+                        {formatInClinicTz(p.fechaPago, timezone, "dd/MM/yyyy HH:mm")}
                       </td>
-                      <td className="px-4 py-3 font-medium">
-                        {p.pacienteNombre}
-                      </td>
+                      <td className="px-4 py-3 font-medium">{p.pacienteNombre}</td>
                       <td className="px-4 py-3">
                         {p.servicios.length === 0 ? (
                           <span className="text-muted">Sin detalle</span>
@@ -274,10 +258,7 @@ export function CajaDashboard({ payments, timezone }: Props) {
                               <li key={`${p.id}-${i}`}>
                                 <span>{s.titulo}</span>
                                 {s.cantidad > 1 ? (
-                                  <span className="text-muted">
-                                    {" "}
-                                    × {s.cantidad}
-                                  </span>
+                                  <span className="text-muted"> × {s.cantidad}</span>
                                 ) : null}
                                 <span className="text-muted">
                                   {" "}
@@ -293,14 +274,10 @@ export function CajaDashboard({ payments, timezone }: Props) {
                         )}
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap tabular-nums">
-                        {p.servicios.length > 0
-                          ? formatCordobas(serviciosCosto)
-                          : "—"}
+                        {p.servicios.length > 0 ? formatCordobas(serviciosCosto) : "—"}
                       </td>
                       <td className="px-4 py-3">
-                        {p.metodoPago === "cash"
-                          ? "Efectivo"
-                          : "Transferencia"}
+                        {p.metodoPago === "cash" ? "Efectivo" : "Transferencia"}
                       </td>
                       <td className="px-4 py-3 font-medium tabular-nums">
                         {formatCordobas(p.monto)}

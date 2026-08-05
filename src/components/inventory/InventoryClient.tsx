@@ -324,9 +324,7 @@ export function InventoryClient({
                 </label>
                 <button
                   type="submit"
-                  disabled={
-                    pending || products.length === 0 || appointments.length === 0
-                  }
+                  disabled={pending || products.length === 0 || appointments.length === 0}
                   className="bg-brand w-full rounded-md px-4 py-2 text-sm font-semibold text-white disabled:opacity-60 sm:w-auto"
                 >
                   Vender
@@ -337,8 +335,8 @@ export function InventoryClient({
         </>
       ) : (
         <p className="text-muted text-sm">
-          Solo admin/recepción gestionan catálogo y ventas. Puede registrar
-          consumo de sesión vía API si aplica.
+          Solo admin/recepción gestionan catálogo y ventas. Puede registrar consumo de
+          sesión vía API si aplica.
         </p>
       )}
     </div>

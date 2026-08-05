@@ -1,10 +1,6 @@
 import { ActionButton } from "@/components/ui/ActionButton";
 import { getCurrentStaff } from "@/lib/auth/current-staff";
-import {
-  clinicDayBoundsUtc,
-  clinicTodayIso,
-  DEFAULT_TZ,
-} from "@/lib/datetime/clinic-tz";
+import { clinicDayBoundsUtc, clinicTodayIso, DEFAULT_TZ } from "@/lib/datetime/clinic-tz";
 import { formatMoney } from "@/lib/money/totals";
 import { getEffectiveMenuAccessForStaff } from "@/lib/permissions/resolve";
 import type { MenuKey } from "@/lib/permissions/menu-catalog";
@@ -34,8 +30,7 @@ export default async function AppHomePage() {
         .select("timezone")
         .eq("clinic_id", staff.clinicId)
         .maybeSingle();
-      const tz =
-        (cfg as { timezone?: string } | null)?.timezone ?? DEFAULT_TZ;
+      const tz = (cfg as { timezone?: string } | null)?.timezone ?? DEFAULT_TZ;
       const fechaClinica = clinicTodayIso(tz);
       const { startIso, endIso } = clinicDayBoundsUtc(fechaClinica, tz);
 
@@ -135,17 +130,13 @@ export default async function AppHomePage() {
         {showCaja ? (
           <div className="border-brand/15 bg-surface rounded-xl border p-5">
             <p className="text-muted text-sm">Ingresos del día</p>
-            <p className="text-brand mt-1 text-3xl font-semibold">
-              {ingresosHoy}
-            </p>
+            <p className="text-brand mt-1 text-3xl font-semibold">{ingresosHoy}</p>
           </div>
         ) : null}
         {showInventario ? (
           <div className="border-brand/15 bg-surface rounded-xl border p-5">
             <p className="text-muted text-sm">Alertas de stock</p>
-            <p className="text-brand mt-1 text-3xl font-semibold">
-              {alertasStock}
-            </p>
+            <p className="text-brand mt-1 text-3xl font-semibold">{alertasStock}</p>
           </div>
         ) : null}
       </div>

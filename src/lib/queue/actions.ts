@@ -160,7 +160,11 @@ export async function addPatientToAttendAction(raw: unknown): Promise<ActionResu
 
   revalidatePath("/app/cola");
   revalidatePath(`/app/pacientes/${input.patientId}`);
-  return { ok: true, id: appointmentId, count: typeof syncCount === "number" ? syncCount : 0 };
+  return {
+    ok: true,
+    id: appointmentId,
+    count: typeof syncCount === "number" ? syncCount : 0,
+  };
 }
 
 export async function syncDailyQueueAction(fecha?: string): Promise<ActionResult> {
@@ -177,8 +181,7 @@ export async function syncDailyQueueAction(fecha?: string): Promise<ActionResult
       .select("timezone")
       .eq("clinic_id", staff.clinicId)
       .maybeSingle();
-    const tz =
-      (config as { timezone?: string } | null)?.timezone ?? DEFAULT_TZ;
+    const tz = (config as { timezone?: string } | null)?.timezone ?? DEFAULT_TZ;
     pFecha = clinicTodayIso(tz);
   }
   const { data, error } = await supabase.rpc("sync_daily_queue", {

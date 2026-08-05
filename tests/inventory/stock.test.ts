@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  deriveStock,
-  isBelowMinimum,
-  movementDelta,
-} from "@/lib/inventory/stock";
+import { deriveStock, isBelowMinimum, movementDelta } from "@/lib/inventory/stock";
 
 describe("stock derivado (4.1)", () => {
   it("entrada + salida → existencia correcta", () => {
@@ -21,9 +17,7 @@ describe("stock derivado (4.1)", () => {
     // Contrato: no hay API de “setStock”; solo append de deltas.
     const stock = deriveStock([5, -1, -1]);
     expect(stock).toBe(3);
-    expect(typeof (globalThis as { setStock?: unknown }).setStock).toBe(
-      "undefined",
-    );
+    expect(typeof (globalThis as { setStock?: unknown }).setStock).toBe("undefined");
   });
 
   it("alerta de reorden cuando stock ≤ mínimo (4.3)", () => {

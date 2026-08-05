@@ -12,7 +12,8 @@ type ClinicalRow = {
 };
 
 function mapEpisode(row: ClinicalRow): ClinicalEpisodeSummary {
-  const createdDate = row.created_at?.slice(0, 10) ?? new Date().toISOString().slice(0, 10);
+  const createdDate =
+    row.created_at?.slice(0, 10) ?? new Date().toISOString().slice(0, 10);
   return {
     id: row.id,
     titulo: row.titulo?.trim() || "Expediente clínico",
@@ -89,14 +90,8 @@ export async function loadPatientsClinicalStats(
   if (patientIds.length === 0) return map;
 
   const [{ data: clinicals }, { data: notes }] = await Promise.all([
-    supabase
-      .from("patient_clinical")
-      .select("patient_id")
-      .in("patient_id", patientIds),
-    supabase
-      .from("session_notes")
-      .select("patient_id")
-      .in("patient_id", patientIds),
+    supabase.from("patient_clinical").select("patient_id").in("patient_id", patientIds),
+    supabase.from("session_notes").select("patient_id").in("patient_id", patientIds),
   ]);
 
   for (const row of (clinicals ?? []) as Array<{ patient_id: string }>) {

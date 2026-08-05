@@ -5,22 +5,16 @@ import { redirect } from "next/navigation";
 
 import { writeAuditLog } from "@/lib/audit/write";
 import { requireCurrentStaff } from "@/lib/auth/current-staff";
-import {
-  ChangePasswordSchema,
-  UpdateOwnProfileSchema,
-} from "@/lib/profile/schemas";
+import { ChangePasswordSchema, UpdateOwnProfileSchema } from "@/lib/profile/schemas";
 import { createClient } from "@/lib/supabase/server";
 
 export type ProfileActionResult =
-  | { ok: true; avatarUrl?: string | null }
-  | { ok: false; error: string };
+  { ok: true; avatarUrl?: string | null } | { ok: false; error: string };
 
 const ALLOWED_MIME = new Set(["image/jpeg", "image/png", "image/webp"]);
 const MAX_BYTES = 2 * 1024 * 1024;
 
-export async function updateOwnProfileAction(
-  raw: unknown,
-): Promise<ProfileActionResult> {
+export async function updateOwnProfileAction(raw: unknown): Promise<ProfileActionResult> {
   const parsed = UpdateOwnProfileSchema.safeParse(raw);
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Datos inválidos" };
@@ -112,9 +106,7 @@ export async function uploadAvatarAction(
   return { ok: true, avatarUrl: signed?.signedUrl ?? null };
 }
 
-export async function changePasswordAction(
-  raw: unknown,
-): Promise<ProfileActionResult> {
+export async function changePasswordAction(raw: unknown): Promise<ProfileActionResult> {
   const parsed = ChangePasswordSchema.safeParse(raw);
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Datos inválidos" };
@@ -165,4 +157,3 @@ export async function signOutAction(): Promise<void> {
   await supabase.auth.signOut();
   redirect("/login");
 }
-

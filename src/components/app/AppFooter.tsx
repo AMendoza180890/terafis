@@ -1,9 +1,4 @@
-import {
-  APP_NAME,
-  APP_VERSION,
-  copyrightYears,
-  DEVELOPER,
-} from "@/lib/app-version";
+import { APP_NAME, APP_VERSION, copyrightYears, DEVELOPER } from "@/lib/app-version";
 
 type AppFooterProps = {
   className?: string;
@@ -24,7 +19,9 @@ export function AppFooter({ className = "" }: AppFooterProps) {
           {APP_NAME} v{APP_VERSION}
         </span>
         <span aria-hidden>·</span>
-        <span>© {years} {APP_NAME}. Todos los derechos reservados.</span>
+        <span>
+          © {years} {APP_NAME}. Todos los derechos reservados.
+        </span>
         <span aria-hidden>·</span>
         <span>
           Desarrollo por{" "}

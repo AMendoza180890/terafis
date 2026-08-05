@@ -5,10 +5,7 @@ import { useState, useTransition } from "react";
 
 import { useToast } from "@/components/notifications/ToastProvider";
 import { CedulaNiInput } from "@/components/ui/CedulaNiInput";
-import {
-  setStaffActiveAction,
-  updateStaffProfileAction,
-} from "@/lib/config/actions";
+import { setStaffActiveAction, updateStaffProfileAction } from "@/lib/config/actions";
 import { formatCedulaNiInput } from "@/lib/validation/cedula-ni";
 
 export type StaffMemberRow = {
@@ -31,11 +28,7 @@ type Props = {
   canManage: boolean;
 };
 
-export function StaffMembersTable({
-  members,
-  currentStaffId,
-  canManage,
-}: Props) {
+export function StaffMembersTable({ members, currentStaffId, canManage }: Props) {
   const router = useRouter();
   const toast = useToast();
   const [pending, startTransition] = useTransition();
@@ -58,10 +51,7 @@ export function StaffMembersTable({
         staffId: m.id,
         activo: next,
       });
-      toast.fromActionResult(
-        result,
-        next ? "Usuario activado" : "Usuario desactivado",
-      );
+      toast.fromActionResult(result, next ? "Usuario activado" : "Usuario desactivado");
       if (result.ok) router.refresh();
       else toast.error(`No se pudo ${label}`, result.error);
     });
@@ -89,8 +79,7 @@ export function StaffMembersTable({
                   colSpan={canManage ? 7 : 6}
                   className="text-muted px-4 py-8 text-center"
                 >
-                  Sin personal registrado. Cree el primer usuario desde el
-                  formulario.
+                  Sin personal registrado. Cree el primer usuario desde el formulario.
                 </td>
               </tr>
             ) : (
@@ -138,9 +127,7 @@ export function StaffMembersTable({
                         </button>
                         <button
                           type="button"
-                          disabled={
-                            pending || (m.activo && m.id === currentStaffId)
-                          }
+                          disabled={pending || (m.activo && m.id === currentStaffId)}
                           title={
                             m.activo && m.id === currentStaffId
                               ? "No puede desactivar su propia cuenta"
@@ -228,9 +215,7 @@ function EditStaffModal({
             telefono: String(fd.get("telefono") ?? ""),
             rol: String(fd.get("rol") ?? ""),
             especialidad: String(fd.get("especialidad") ?? ""),
-            cedulaProfesional: formatCedulaNiInput(
-              String(fd.get("cedula") ?? ""),
-            ),
+            cedulaProfesional: formatCedulaNiInput(String(fd.get("cedula") ?? "")),
             password: String(fd.get("password") ?? ""),
           });
         }}
@@ -242,12 +227,7 @@ function EditStaffModal({
           Actualice los datos del personal. La contraseña es opcional.
         </p>
 
-        <Field
-          name="nombre"
-          label="Nombre"
-          defaultValue={member.nombre}
-          required
-        />
+        <Field name="nombre" label="Nombre" defaultValue={member.nombre} required />
         <Field
           name="email"
           label="Correo"
@@ -255,11 +235,7 @@ function EditStaffModal({
           defaultValue={member.email}
           required
         />
-        <Field
-          name="telefono"
-          label="Teléfono"
-          defaultValue={member.telefono ?? ""}
-        />
+        <Field name="telefono" label="Teléfono" defaultValue={member.telefono ?? ""} />
         <label className="block text-sm">
           <span className="text-muted mb-1 block">Rol</span>
           <select

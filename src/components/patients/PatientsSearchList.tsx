@@ -97,10 +97,7 @@ export function PatientsSearchList({
               filtered.map((p) => {
                 const hasClinical = (p.expedientes ?? 0) > 0;
                 return (
-                  <tr
-                    key={p.id}
-                    className="border-brand/5 border-b last:border-0"
-                  >
+                  <tr key={p.id} className="border-brand/5 border-b last:border-0">
                     <td className="px-4 py-3 font-medium">{p.nombre}</td>
                     <td className="px-4 py-3">{p.telefono}</td>
                     <td className="px-4 py-3">{p.email ?? "—"}</td>

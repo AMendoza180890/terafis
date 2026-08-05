@@ -23,12 +23,7 @@ export const TreatmentPlanFieldsSchema = z.object({
   diagnostico: z.string().trim().min(1, "Diagnóstico requerido").max(5000),
   objetivo: z.string().trim().min(1, "Objetivo requerido").max(5000),
   frecuencia: z.string().trim().min(1, "Frecuencia requerida").max(80),
-  duracionEstimadaSemanas: z.coerce
-    .number()
-    .int()
-    .positive()
-    .max(104)
-    .optional(),
+  duracionEstimadaSemanas: z.coerce.number().int().positive().max(104).optional(),
   ejerciciosDetalle: EjerciciosDetalleSchema,
 });
 
@@ -72,9 +67,7 @@ export function exercisesToDetalle(
     .map((e) => {
       const parts = [e.nombre];
       if (e.series != null || e.repeticiones != null) {
-        parts.push(
-          `${e.series ?? "—"} series × ${e.repeticiones ?? "—"} repeticiones`,
-        );
+        parts.push(`${e.series ?? "—"} series × ${e.repeticiones ?? "—"} repeticiones`);
       }
       if (e.descripcion?.trim()) parts.push(e.descripcion.trim());
       return parts.join(" — ");

@@ -9,10 +9,8 @@ const variantClass: Record<Variant, string> = {
   primary: "bg-brand font-semibold text-white hover:opacity-90",
   secondary:
     "border-brand/30 bg-surface text-brand border font-medium hover:bg-brand-soft",
-  ghost:
-    "bg-brand-soft/60 text-brand font-medium hover:bg-brand-soft",
-  danger:
-    "border border-red-300 text-red-700 hover:bg-red-50 dark:hover:bg-red-950/40",
+  ghost: "bg-brand-soft/60 text-brand font-medium hover:bg-brand-soft",
+  danger: "border border-red-300 text-red-700 hover:bg-red-50 dark:hover:bg-red-950/40",
 };
 
 type Props = {

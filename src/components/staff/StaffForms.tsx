@@ -48,15 +48,11 @@ export function StaffForms({
               telefono: String(fd.get("telefono") ?? ""),
               rol: String(fd.get("rol")),
               especialidad: String(fd.get("especialidad") ?? ""),
-              cedulaProfesional: formatCedulaNiInput(
-                String(fd.get("cedula") ?? ""),
-              ),
+              cedulaProfesional: formatCedulaNiInput(String(fd.get("cedula") ?? "")),
             });
             toast.fromActionResult(result, "Usuario creado");
             setMessage(
-              result.ok
-                ? "Usuario creado. Ya puede iniciar sesión."
-                : result.error,
+              result.ok ? "Usuario creado. Ya puede iniciar sesión." : result.error,
             );
             if (result.ok) {
               setFormKey((k) => k + 1);
@@ -67,8 +63,8 @@ export function StaffForms({
       >
         <h2 className="font-semibold">Crear usuario</h2>
         <p className="text-muted text-xs">
-          Se crea la cuenta de acceso y el perfil de staff desde aquí. El
-          usuario podrá iniciar sesión de inmediato.
+          Se crea la cuenta de acceso y el perfil de staff desde aquí. El usuario podrá
+          iniciar sesión de inmediato.
         </p>
         <Input name="nombre" label="Nombre" required />
         <Input name="email" label="Correo" type="email" required />
@@ -200,18 +196,12 @@ export function StaffForms({
             disabled={pending || members.length === 0}
             className="border-brand/30 text-brand mt-3 w-full rounded-md border px-4 py-2 text-sm sm:w-auto"
             onClick={() => {
-              const el = document.getElementById(
-                "mfaStaff",
-              ) as HTMLSelectElement | null;
+              const el = document.getElementById("mfaStaff") as HTMLSelectElement | null;
               if (!el?.value) return;
               startTransition(async () => {
                 const result = await setMfaForceReenrollAction(el.value, true);
                 toast.fromActionResult(result, "MFA actualizado");
-                setMessage(
-                  result.ok
-                    ? "MFA marcado para reinscripción."
-                    : result.error,
-                );
+                setMessage(result.ok ? "MFA marcado para reinscripción." : result.error);
                 if (result.ok) router.refresh();
               });
             }}
@@ -221,9 +211,7 @@ export function StaffForms({
         </div>
       </form>
 
-      {message ? (
-        <p className="text-muted text-sm lg:col-span-2">{message}</p>
-      ) : null}
+      {message ? <p className="text-muted text-sm lg:col-span-2">{message}</p> : null}
     </div>
   );
 }

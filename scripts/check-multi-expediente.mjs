@@ -43,10 +43,7 @@ async function main() {
     console.log("SCHEMA_OK", probe.data?.[0] ?? "empty");
   }
 
-  const notesProbe = await sb
-    .from("session_notes")
-    .select("id, clinical_id")
-    .limit(1);
+  const notesProbe = await sb.from("session_notes").select("id, clinical_id").limit(1);
   if (notesProbe.error) {
     console.log("NOTES_PROBE_ERROR", notesProbe.error.message);
   } else {

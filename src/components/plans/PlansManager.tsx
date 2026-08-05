@@ -48,9 +48,7 @@ export function PlansManager({
                 : undefined,
               ejerciciosDetalle: String(fd.get("ejerciciosDetalle") ?? ""),
             });
-            setMessage(
-              result.ok ? `Plan creado (v${result.version})` : result.error,
-            );
+            setMessage(result.ok ? `Plan creado (v${result.version})` : result.error);
             if (result.ok) router.refresh();
           });
         }}
@@ -160,9 +158,7 @@ export function PlansManager({
         </div>
       ) : null}
 
-      {message ? (
-        <p className="text-muted text-sm lg:col-span-2">{message}</p>
-      ) : null}
+      {message ? <p className="text-muted text-sm lg:col-span-2">{message}</p> : null}
     </div>
   );
 }

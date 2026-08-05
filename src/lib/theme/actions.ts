@@ -15,9 +15,7 @@ import {
 
 export type ThemeActionResult = { ok: true } | { ok: false; error: string };
 
-export async function setStaffThemeAction(
-  raw: unknown,
-): Promise<ThemeActionResult> {
+export async function setStaffThemeAction(raw: unknown): Promise<ThemeActionResult> {
   const parsed = ThemePreferenceSchema.safeParse(raw);
   if (!parsed.success) {
     return { ok: false, error: "Tema inválido" };
@@ -33,8 +31,8 @@ export async function setStaffThemeAction(
     .maybeSingle();
 
   const clinicDefault =
-    (cfg as { tema_defecto?: "claro" | "oscuro" | "sistema" } | null)
-      ?.tema_defecto ?? "sistema";
+    (cfg as { tema_defecto?: "claro" | "oscuro" | "sistema" } | null)?.tema_defecto ??
+    "sistema";
 
   const { error } = await supabase
     .from("staff")
@@ -70,9 +68,7 @@ export async function setStaffThemeAction(
 }
 
 /** Actualiza solo la cookie de esquema resuelto (cliente, sin flash). */
-export async function syncResolvedSchemeAction(
-  systemIsDark: boolean,
-): Promise<void> {
+export async function syncResolvedSchemeAction(systemIsDark: boolean): Promise<void> {
   const jar = await cookies();
   const theme =
     (jar.get(THEME_COOKIE)?.value as "claro" | "oscuro" | "sistema" | undefined) ??

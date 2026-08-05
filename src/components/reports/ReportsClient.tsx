@@ -253,23 +253,15 @@ export function ReportsClient({ canExport }: { canExport: boolean }) {
         </div>
       ) : (
         <p className="text-muted text-sm">
-          Seleccione un periodo y pulse Calcular. Los agregados no incluyen
-          nombres ni diagnósticos.
+          Seleccione un periodo y pulse Calcular. Los agregados no incluyen nombres ni
+          diagnósticos.
         </p>
       )}
     </div>
   );
 }
 
-function Stat({
-  label,
-  value,
-  hint,
-}: {
-  label: string;
-  value: string;
-  hint?: string;
-}) {
+function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
     <div className="border-brand/15 bg-surface rounded-xl border p-5">
       <p className="text-muted text-sm">{label}</p>

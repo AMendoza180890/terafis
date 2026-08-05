@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  formatCedulaNiInput,
-  isValidCedulaNi,
-} from "@/lib/validation/cedula-ni";
+import { formatCedulaNiInput, isValidCedulaNi } from "@/lib/validation/cedula-ni";
 
 describe("cédula Nicaragua", () => {
   it("aplica máscara mientras escribe", () => {

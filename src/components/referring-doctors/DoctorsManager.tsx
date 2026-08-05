@@ -77,11 +77,7 @@ export function DoctorsManager({ doctors }: { doctors: DoctorRow[] }) {
           label="Especialidad"
           defaultValue={editing?.especialidad ?? ""}
         />
-        <Field
-          name="telefono"
-          label="Teléfono"
-          defaultValue={editing?.telefono ?? ""}
-        />
+        <Field name="telefono" label="Teléfono" defaultValue={editing?.telefono ?? ""} />
         <Field
           name="direccion"
           label="Dirección"

@@ -125,18 +125,14 @@ export default async function PlanDetailPage({ params }: Props) {
             <p className="font-medium">Versión {v.version}</p>
             <p className="text-muted text-xs">{v.frecuencia}</p>
             <p className="mt-2">
-              <strong>{TREATMENT_PLAN_FIELD_LABELS.diagnostico}:</strong>{" "}
-              {v.diagnostico}
+              <strong>{TREATMENT_PLAN_FIELD_LABELS.diagnostico}:</strong> {v.diagnostico}
             </p>
             <p>
-              <strong>{TREATMENT_PLAN_FIELD_LABELS.objetivo}:</strong>{" "}
-              {v.objetivo}
+              <strong>{TREATMENT_PLAN_FIELD_LABELS.objetivo}:</strong> {v.objetivo}
             </p>
             {v.ejerciciosDetalle ? (
               <p className="mt-2 whitespace-pre-wrap">
-                <strong>
-                  {TREATMENT_PLAN_FIELD_LABELS.ejerciciosDetalle}:
-                </strong>
+                <strong>{TREATMENT_PLAN_FIELD_LABELS.ejerciciosDetalle}:</strong>
                 {"\n"}
                 {v.ejerciciosDetalle}
               </p>

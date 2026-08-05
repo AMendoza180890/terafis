@@ -80,17 +80,11 @@ export function currentYearMonthOptions(timezone: string = DEFAULT_TZ): Array<{
   return options.reverse(); // mes actual primero
 }
 
-export function paymentLocalDate(
-  fechaPagoIso: string,
-  timezone: string,
-): string {
+export function paymentLocalDate(fechaPagoIso: string, timezone: string): string {
   return formatInTimeZone(new Date(fechaPagoIso), timezone, "yyyy-MM-dd");
 }
 
-export function paymentLocalMonth(
-  fechaPagoIso: string,
-  timezone: string,
-): string {
+export function paymentLocalMonth(fechaPagoIso: string, timezone: string): string {
   return formatInTimeZone(new Date(fechaPagoIso), timezone, "yyyy-MM");
 }
 
@@ -175,9 +169,7 @@ export function yearMonthlyEarnings(
     const date = new Date(y, m - 1, 1);
     const bucket: MonthEarnings = {
       key,
-      shortLabel: date
-        .toLocaleDateString("es-NI", { month: "short" })
-        .replace(".", ""),
+      shortLabel: date.toLocaleDateString("es-NI", { month: "short" }).replace(".", ""),
       label: date.toLocaleDateString("es-NI", {
         month: "long",
         year: "numeric",

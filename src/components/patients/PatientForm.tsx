@@ -69,7 +69,11 @@ export function PatientForm({
 
     startTransition(async () => {
       const result = await createPatientAction(payload);
-      toast.fromActionResult(result, "Paciente guardado", "Registro creado correctamente.");
+      toast.fromActionResult(
+        result,
+        "Paciente guardado",
+        "Registro creado correctamente.",
+      );
       if (!result.ok) {
         setError(result.error);
         return;
@@ -146,10 +150,7 @@ export function PatientForm({
             name="historialMedico"
           />
           <TextArea label={CLINICAL_FIELD_LABELS.alergias} name="alergias" />
-          <TextArea
-            label={CLINICAL_FIELD_LABELS.medicamentos}
-            name="medicamentos"
-          />
+          <TextArea label={CLINICAL_FIELD_LABELS.medicamentos} name="medicamentos" />
           <TextArea
             label={CLINICAL_FIELD_LABELS.diagnosticosPrevios}
             name="diagnosticosPrevios"

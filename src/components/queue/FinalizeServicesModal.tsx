@@ -69,8 +69,8 @@ export function FinalizeServicesModal({
       >
         <h2 className="text-lg font-semibold">Finalizar — {patientNombre}</h2>
         <p className="text-muted mt-1 text-sm">
-          Seleccione los servicios aplicados. El paciente pasará a pendiente de
-          pago para recepción.
+          Seleccione los servicios aplicados. El paciente pasará a pendiente de pago para
+          recepción.
         </p>
         <ul className="mt-4 space-y-2">
           {services.map((s) => (
@@ -84,9 +84,7 @@ export function FinalizeServicesModal({
                   />
                   {s.titulo}
                 </span>
-                <span className="text-muted">
-                  {formatCordobas(s.costo)}
-                </span>
+                <span className="text-muted">{formatCordobas(s.costo)}</span>
               </label>
             </li>
           ))}

@@ -24,8 +24,8 @@ export function MenuAccessGate({
       <div className="space-y-3 py-8">
         <h1 className="font-serif text-2xl">Sin permiso</h1>
         <p className="text-muted text-sm">
-          No tiene acceso a esta sección del menú. Contacte al administrador si
-          necesita habilitarla.
+          No tiene acceso a esta sección del menú. Contacte al administrador si necesita
+          habilitarla.
         </p>
         <Link
           href="/app"

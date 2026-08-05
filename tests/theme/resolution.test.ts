@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  resolveColorScheme,
-  resolveThemePreference,
-} from "@/lib/theme/resolution";
+import { resolveColorScheme, resolveThemePreference } from "@/lib/theme/resolution";
 
 describe("precedencia de tema (4.10)", () => {
   it("preferencia staff > tema clínica > sistema", () => {

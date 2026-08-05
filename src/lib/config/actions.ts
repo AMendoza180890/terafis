@@ -128,8 +128,7 @@ export async function createStaffProfileAction(raw: unknown): Promise<ActionResu
   } catch {
     return {
       ok: false,
-      error:
-        "Falta SUPABASE_SERVICE_ROLE_KEY en el servidor para crear usuarios.",
+      error: "Falta SUPABASE_SERVICE_ROLE_KEY en el servidor para crear usuarios.",
     };
   }
 
@@ -250,8 +249,7 @@ export async function updateStaffProfileAction(raw: unknown): Promise<ActionResu
     } catch {
       return {
         ok: false,
-        error:
-          "Falta SUPABASE_SERVICE_ROLE_KEY para actualizar acceso del usuario.",
+        error: "Falta SUPABASE_SERVICE_ROLE_KEY para actualizar acceso del usuario.",
       };
     }
 

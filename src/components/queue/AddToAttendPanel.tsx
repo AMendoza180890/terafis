@@ -18,11 +18,7 @@ type Props = {
   fixedPatient?: { id: string; nombre: string } | null;
 };
 
-export function AddToAttendPanel({
-  therapists,
-  timezone,
-  fixedPatient = null,
-}: Props) {
+export function AddToAttendPanel({ therapists, timezone, fixedPatient = null }: Props) {
   const router = useRouter();
   const toast = useToast();
   const [pending, startTransition] = useTransition();
@@ -98,8 +94,8 @@ export function AddToAttendPanel({
       <div>
         <h2 className="font-semibold">Agregar a lista de atención</h2>
         <p className="text-muted mt-1 text-xs">
-          Busque un paciente registrado, asígnelo a un terapeuta y envíelo a la cola
-          de hoy.
+          Busque un paciente registrado, asígnelo a un terapeuta y envíelo a la cola de
+          hoy.
         </p>
       </div>
 

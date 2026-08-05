@@ -65,11 +65,7 @@ describe("caja periods (mes en curso)", () => {
         monto: 999,
       }),
     ];
-    const inMonth = filterPaymentsByDate(
-      rows,
-      { month: "2026-07" },
-      "America/Managua",
-    );
+    const inMonth = filterPaymentsByDate(rows, { month: "2026-07" }, "America/Managua");
     expect(inMonth.map((p) => p.id).sort()).toEqual(["1", "2"]);
 
     const ranged = filterPaymentsByDate(

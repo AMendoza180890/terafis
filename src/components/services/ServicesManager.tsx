@@ -250,7 +250,7 @@ function EditServiceModal({
       aria-labelledby="edit-service-title"
     >
       <form
-        className="bg-surface text-foreground max-h-[90vh] w-full max-w-lg space-y-3 overflow-y-auto rounded-xl border border-brand/20 p-6 shadow-xl"
+        className="bg-surface text-foreground border-brand/20 max-h-[90vh] w-full max-w-lg space-y-3 overflow-y-auto rounded-xl border p-6 shadow-xl"
         onSubmit={(e) => {
           e.preventDefault();
           const fd = new FormData(e.currentTarget);
@@ -271,17 +271,12 @@ function EditServiceModal({
           Editar servicio
         </h2>
         <p className="text-muted text-xs">
-          Los cambios actualizan el precio de lista. Las citas ya cobradas conservan
-          su `costo_aplicado`.
+          Los cambios actualizan el precio de lista. Las citas ya cobradas conservan su
+          `costo_aplicado`.
         </p>
 
         <TipoSelect name="tipo" defaultValue={service.tipo} />
-        <Field
-          name="titulo"
-          label="Título"
-          required
-          defaultValue={service.titulo}
-        />
+        <Field name="titulo" label="Título" required defaultValue={service.titulo} />
         <label className="block text-sm">
           <span className="text-muted mb-1 block">Descripción</span>
           <AutoTextarea
@@ -337,13 +332,7 @@ function EditServiceModal({
   );
 }
 
-function TipoSelect({
-  name,
-  defaultValue,
-}: {
-  name: string;
-  defaultValue?: string;
-}) {
+function TipoSelect({ name, defaultValue }: { name: string; defaultValue?: string }) {
   return (
     <label className="block text-sm">
       <span className="text-muted mb-1 block">Tipo</span>

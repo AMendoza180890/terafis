@@ -4,11 +4,7 @@
  */
 
 export type InventoryMovementTipo =
-  | "entrada"
-  | "salida"
-  | "ajuste"
-  | "venta"
-  | "consumo_sesion";
+  "entrada" | "salida" | "ajuste" | "venta" | "consumo_sesion";
 
 export type StockMovement = {
   tipo: InventoryMovementTipo;

@@ -5,9 +5,7 @@ export const ProductSchema = z.object({
   sku: z.string().trim().max(64).optional().nullable(),
   descripcion: z.string().trim().max(2000).optional().nullable(),
   unidad: z.string().trim().min(1).max(40).default("unidad"),
-  precioVenta: z
-    .string()
-    .regex(/^\d+(\.\d{1,2})?$/, "Precio inválido"),
+  precioVenta: z.string().regex(/^\d+(\.\d{1,2})?$/, "Precio inválido"),
   stockMinimo: z.coerce.number().int().min(0).default(0),
   activo: z.boolean().default(true),
 });
@@ -35,7 +33,10 @@ export const InventoryMovementSchema = z.discriminatedUnion("tipo", [
   z.object({
     productId: z.string().uuid(),
     tipo: z.literal("ajuste"),
-    signedDelta: z.coerce.number().int().refine((n) => n !== 0, "Delta ≠ 0"),
+    signedDelta: z.coerce
+      .number()
+      .int()
+      .refine((n) => n !== 0, "Delta ≠ 0"),
     motivo: z.string().trim().max(500).optional().nullable(),
   }),
 ]);

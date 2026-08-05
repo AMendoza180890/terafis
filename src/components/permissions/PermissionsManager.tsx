@@ -35,11 +35,7 @@ const ROLES: Array<{ value: StaffRole; label: string }> = [
   { value: "terapeuta", label: "Fisioterapeuta" },
 ];
 
-export function PermissionsManager({
-  currentStaffId,
-}: {
-  currentStaffId: string;
-}) {
+export function PermissionsManager({ currentStaffId }: { currentStaffId: string }) {
   const router = useRouter();
   const toast = useToast();
   const [pending, startTransition] = useTransition();
@@ -51,12 +47,8 @@ export function PermissionsManager({
   const [staffList, setStaffList] = useState<StaffOpt[]>([]);
   const [selectedStaffId, setSelectedStaffId] = useState("");
   const [staffRol, setStaffRol] = useState<StaffRole>("terapeuta");
-  const [roleDefaults, setRoleDefaults] = useState<
-    Partial<Record<MenuKey, boolean>>
-  >({});
-  const [modes, setModes] = useState<Partial<Record<MenuKey, OverrideMode>>>(
-    {},
-  );
+  const [roleDefaults, setRoleDefaults] = useState<Partial<Record<MenuKey, boolean>>>({});
+  const [modes, setModes] = useState<Partial<Record<MenuKey, OverrideMode>>>({});
 
   useEffect(() => {
     startTransition(async () => {
@@ -139,11 +131,7 @@ export function PermissionsManager({
 
   function setMode(key: MenuKey, mode: OverrideMode) {
     if (key === "inicio") return;
-    if (
-      selectedStaffId === currentStaffId &&
-      key === "permisos" &&
-      mode === "deny"
-    ) {
+    if (selectedStaffId === currentStaffId && key === "permisos" && mode === "deny") {
       toast.error("Permisos", "No puede quitarse a sí mismo el acceso a Permisos");
       return;
     }
@@ -197,14 +185,13 @@ export function PermissionsManager({
             </button>
           </div>
           <p className="text-muted text-sm">
-            Define el menú base del rol. Los usuarios pueden tener excepciones
-            en la pestaña «Por usuario».
+            Define el menú base del rol. Los usuarios pueden tener excepciones en la
+            pestaña «Por usuario».
           </p>
           <ul className="grid gap-2 sm:grid-cols-2">
             {MENU_CATALOG.map((item) => {
               const locked =
-                item.key === "inicio" ||
-                (rol === "admin" && item.key === "permisos");
+                item.key === "inicio" || (rol === "admin" && item.key === "permisos");
               const checked = roleAllowed.has(item.key);
               return (
                 <li key={item.key}>
@@ -271,8 +258,8 @@ export function PermissionsManager({
             </button>
           </div>
           <p className="text-muted text-sm">
-            Rol del usuario: <strong>{staffRol}</strong>. Elija heredar el rol,
-            forzar acceso o quitar acceso por opción.
+            Rol del usuario: <strong>{staffRol}</strong>. Elija heredar el rol, forzar
+            acceso o quitar acceso por opción.
           </p>
           <ul className="space-y-2">
             {MENU_CATALOG.map((item) => {
@@ -288,8 +275,7 @@ export function PermissionsManager({
                   <div>
                     <p className="font-medium">{item.label}</p>
                     <p className="text-muted text-xs">
-                      Rol: {roleHas ? "sí" : "no"} · Efectivo:{" "}
-                      {effective ? "sí" : "no"}
+                      Rol: {roleHas ? "sí" : "no"} · Efectivo: {effective ? "sí" : "no"}
                       {mode !== "inherit" ? " · excepción" : ""}
                     </p>
                   </div>
@@ -342,9 +328,7 @@ function TabButton({
       onClick={onClick}
       className={[
         "rounded-md px-4 py-2 text-sm font-semibold",
-        active
-          ? "bg-brand text-white"
-          : "border-brand/20 border text-foreground",
+        active ? "bg-brand text-white" : "border-brand/20 text-foreground border",
       ].join(" ")}
     >
       {children}

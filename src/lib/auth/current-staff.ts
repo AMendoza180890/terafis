@@ -63,7 +63,10 @@ export async function getCurrentStaff(): Promise<CurrentStaff | null> {
         .eq("activo", true)
         .maybeSingle();
       if (fallback.error || !fallback.data) return null;
-      return mapStaff({ ...(fallback.data as Omit<StaffRow, "avatar_path">), avatar_path: null });
+      return mapStaff({
+        ...(fallback.data as Omit<StaffRow, "avatar_path">),
+        avatar_path: null,
+      });
     }
     return null;
   }

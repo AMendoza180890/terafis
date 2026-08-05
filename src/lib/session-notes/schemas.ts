@@ -35,10 +35,10 @@ function refineOptionalPlan(
 ) {
   const started = Boolean(
     data.diagnostico?.trim() ||
-      data.objetivo?.trim() ||
-      data.frecuencia?.trim() ||
-      data.ejerciciosDetalle?.trim() ||
-      data.duracionEstimadaSemanas != null,
+    data.objetivo?.trim() ||
+    data.frecuencia?.trim() ||
+    data.ejerciciosDetalle?.trim() ||
+    data.duracionEstimadaSemanas != null,
   );
   if (!started) return;
 
@@ -53,8 +53,7 @@ function refineOptionalPlan(
     ctx.addIssue({
       code: "custom",
       message:
-        plan.error.issues[0]?.message ??
-        "Complete el plan de tratamiento o déjelo vacío",
+        plan.error.issues[0]?.message ?? "Complete el plan de tratamiento o déjelo vacío",
       path: ["ejerciciosDetalle"],
     });
   }

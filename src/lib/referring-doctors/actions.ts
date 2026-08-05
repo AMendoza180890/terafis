@@ -16,9 +16,7 @@ function canManage(rol: string) {
   return rol === "admin" || rol === "recepcionista";
 }
 
-export async function createReferringDoctorAction(
-  raw: unknown,
-): Promise<ActionResult> {
+export async function createReferringDoctorAction(raw: unknown): Promise<ActionResult> {
   const parsed = ReferringDoctorSchema.safeParse(raw);
   const staff = await requireCurrentStaff();
 
@@ -80,9 +78,7 @@ export async function createReferringDoctorAction(
   return { ok: true, id };
 }
 
-export async function updateReferringDoctorAction(
-  raw: unknown,
-): Promise<ActionResult> {
+export async function updateReferringDoctorAction(raw: unknown): Promise<ActionResult> {
   const parsed = UpdateReferringDoctorSchema.safeParse(raw);
   const staff = await requireCurrentStaff();
 
@@ -127,9 +123,7 @@ export async function updateReferringDoctorAction(
   return { ok: true, id: input.id };
 }
 
-export async function deactivateReferringDoctorAction(
-  id: string,
-): Promise<ActionResult> {
+export async function deactivateReferringDoctorAction(id: string): Promise<ActionResult> {
   const staff = await requireCurrentStaff();
   if (!canManage(staff.rol)) {
     return { ok: false, error: "Sin permiso" };

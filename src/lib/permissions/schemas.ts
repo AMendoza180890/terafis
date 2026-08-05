@@ -8,9 +8,7 @@ export const SaveRoleMenuPermissionsSchema = z.object({
   allowedKeys: z.array(z.enum(MENU_KEYS)),
 });
 
-export type SaveRoleMenuPermissionsInput = z.infer<
-  typeof SaveRoleMenuPermissionsSchema
->;
+export type SaveRoleMenuPermissionsInput = z.infer<typeof SaveRoleMenuPermissionsSchema>;
 
 export const SaveStaffMenuOverridesSchema = z.object({
   staffId: z.string().uuid(),
@@ -18,6 +16,4 @@ export const SaveStaffMenuOverridesSchema = z.object({
   overrides: z.record(z.enum(MENU_KEYS), z.boolean()),
 });
 
-export type SaveStaffMenuOverridesInput = z.infer<
-  typeof SaveStaffMenuOverridesSchema
->;
+export type SaveStaffMenuOverridesInput = z.infer<typeof SaveStaffMenuOverridesSchema>;

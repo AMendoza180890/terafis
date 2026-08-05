@@ -8,10 +8,7 @@ import { ToastProvider } from "@/components/notifications/ToastProvider";
 import { MenuAccessGate } from "@/components/permissions/MenuAccessGate";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { getCurrentStaff } from "@/lib/auth/current-staff";
-import {
-  CODE_ROLE_MENU_DEFAULTS,
-  type MenuKey,
-} from "@/lib/permissions/menu-catalog";
+import { CODE_ROLE_MENU_DEFAULTS, type MenuKey } from "@/lib/permissions/menu-catalog";
 import { getEffectiveMenuAccessForStaff } from "@/lib/permissions/resolve";
 import { getAvatarSignedUrl } from "@/lib/profile/avatar";
 import { inactivityMinutesForRole } from "@/lib/roles";
@@ -54,8 +51,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       ]);
       notifications = (data ?? []) as NotificationItem[];
       clinicTema =
-        (cfg as { tema_defecto?: "claro" | "oscuro" | "sistema" } | null)
-          ?.tema_defecto ?? "sistema";
+        (cfg as { tema_defecto?: "claro" | "oscuro" | "sistema" } | null)?.tema_defecto ??
+        "sistema";
       avatarUrl = signed;
       allowedMenuKeys = menuAccess.effectiveKeys;
     } catch {

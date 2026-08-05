@@ -85,11 +85,7 @@ export function NotificationCenter({
         className="text-muted hover:bg-brand-soft relative rounded-md px-2 py-1.5 text-sm"
         aria-haspopup="dialog"
         aria-expanded={open}
-        aria-label={
-          unread > 0
-            ? `Notificaciones, ${unread} sin leer`
-            : "Notificaciones"
-        }
+        aria-label={unread > 0 ? `Notificaciones, ${unread} sin leer` : "Notificaciones"}
         onClick={() => setOpen((v) => !v)}
       >
         Avisos

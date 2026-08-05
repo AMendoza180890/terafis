@@ -103,8 +103,7 @@ export function resolveEffectiveMenuKeys(input: {
       continue;
     }
     const roleAllowed =
-      input.roleDefaults[key] ??
-      CODE_ROLE_MENU_DEFAULTS[input.role].includes(key);
+      input.roleDefaults[key] ?? CODE_ROLE_MENU_DEFAULTS[input.role].includes(key);
     if (roleAllowed) result.add(key);
   }
   return result;
